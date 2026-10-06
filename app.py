@@ -255,9 +255,6 @@ st.markdown('<div class="table-section-title">📊 DATA MENARA TELEKOMUNIKASI</d
 
 with st.container():
     if not df_filtered.empty:
-        st.dataframe(
-            df_filtered, 
-            use_container_width=True, 
-            hide_index=True,
-            column_config={
-                "long": st.column_config.NumberColumn(format="%.6f"),
+        # Merender tabel secara langsung dan bersih untuk menghindari potensi syntax error pada format angka koordinat
+        st.dataframe(df_filtered, use_container_width=True, hide_index=True)
+    else:
