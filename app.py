@@ -36,10 +36,6 @@ st.markdown("""
         color: #334155;
         margin: 0;
     }
-    .header-left style-span {
-        font-size: 14px;
-        color: #94a3b8;
-    }
     .header-right {
         font-family: Arial, sans-serif;
         font-size: 11px;
@@ -68,6 +64,15 @@ st.markdown("""
     }
     .map-card-body {
         padding: 0px;
+    }
+    
+    .filter-card {
+        background-color: #ffffff;
+        padding: 15px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
     .table-section-title {
@@ -103,7 +108,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. FUNGSI LOAD DATA
+# 3. FUNGSI LOAD DATA & PRE-PROCESSING
 # ==========================================
 def load_geojson(file_path):
     try:
@@ -115,31 +120,9 @@ def load_geojson(file_path):
 batas_kota = load_geojson("batas_kota_bandung.geojson")
 data_bts = load_geojson("BTS_kota_bandung.geojson")
 
-# ==========================================
-# 4. BINGKAI PETA INTERAKTIF
-# ==========================================
-st.markdown('<div class="map-card"><div class="map-card-header">🌐 PETA MENARA TELEKOMUNIKASI</div><div class="map-card-body">', unsafe_allow_html=True)
-
-m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="OpenStreetMap")
-
-if batas_kota:
-    folium.GeoJson(
-        data=batas_kota,
-        style_function=lambda feature: {
-            "fillColor": "#22c55e",
-            "color": "#16a34a",
-            "weight": 2,
-            "fillOpacity": 0.08,
-        }
-    ).add_to(m)
-
-rows_list = []
-
+# Menyusun database awal untuk kebutuhan filter dan tabel
+raw_rows = []
 if data_bts:
-    marker_cluster = MarkerCluster(
-        options={'maxClusterRadius': 40, 'disableClusteringAtZoom': 14}
-    ).add_to(m)
-    
     for idx, feature in enumerate(data_bts["features"], start=1):
         geom = feature["geometry"]
         props = feature["properties"]
@@ -147,27 +130,16 @@ if data_bts:
         if geom["type"] == "Point":
             lon, lat = geom["coordinates"]
             
-            popup_html = "<div style='font-family:Arial; font-size:12px; width:200px;'>"
-            popup_html += "<b>Detail Menara BTS</b><hr style='margin:4px 0;'>"
-            for k, v in props.items():
-                if v: popup_html += f"<b>{k}:</b> {v}<br>"
-            popup_html += f"<b>Latitude:</b> {lat}<br><b>Longitude:</b> {lon}</div>"
-            
-            folium.Marker(
-                location=[lat, lon],
-                popup=folium.Popup(popup_html, max_width=250),
-                icon=folium.Icon(color="red", icon="signal", prefix="fa")
-            ).add_to(marker_cluster)
-            
             def get_prop(keys_list, default="-"):
                 for k in keys_list:
                     for actual_key in props.keys():
                         if actual_key.lower().strip() == k.lower().strip():
-                            return props[actual_key]
+                            val = props[actual_key]
+                            return str(val).strip() if val is not None else default
                 return default
 
-            rows_list.append({
-                "id": get_prop(["id", "objectid", "no"], idx),
+            raw_rows.append({
+                "id": get_prop(["id", "objectid", "no"], str(idx)),
                 "nama_provinsi": get_prop(["nama_provinsi", "provinsi", "prov"], "JAWA BARAT"),
                 "nama_kabupaten_kota": get_prop(["nama_kabupaten_kota", "kabupaten", "kota"], "KOTA BANDUNG"),
                 "nama_kecamatan": get_prop(["nama_kecamatan", "kecamatan", "kec"]),
@@ -182,24 +154,107 @@ if data_bts:
                 "tahun": get_prop(["tahun", "tahun_berdiri", "thn"])
             })
 
+# Mengubah data mentah ke Pandas Dataframe
+df_all = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
+    "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
+    "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", "satuan", "tahun"
+])
+
+# ==========================================
+# 4. PANEL FILTER DATA (4 KELOMPOK PILIHAN)
+# ==========================================
+st.markdown('<div class="table-section-title">🔍 FILTER DATA MENARA</div>', unsafe_allow_html=True)
+
+# Membuat komponen kontainer putih untuk filter
+with st.container():
+    st.markdown('<div class="filter-card">', unsafe_allow_html=True)
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
+        selected_kec = st.selectbox("Nama Kecamatan:", list_kec)
+        
+    with col2:
+        # Filter kelurahan bersifat dinamis (mengikuti kecamatan yang dipilih)
+        if selected_kec != "Semua Kecamatan":
+            df_filtered_kec = df_all[df_all["nama_kecamatan"] == selected_kec]
+            list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_filtered_kec["nama_desa_kelurahan"].unique() if x != "-"])
+        else:
+            list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
+        selected_kel = st.selectbox("Nama Desa/Kelurahan:", list_kel)
+        
+    with col3:
+        list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
+        selected_pemilik = st.selectbox("Pemilik Menara:", list_pemilik)
+        
+    with col4:
+        list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
+        selected_struktur = st.selectbox("Struktur Tower:", list_struktur)
+        
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- PROSES PENYARINGAN DATAFRAME ---
+df_filtered = df_all.copy()
+
+if selected_kec != "Semua Kecamatan":
+    df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
+if selected_kel != "Semua Desa/Kelurahan":
+    df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
+if selected_pemilik != "Semua Pemilik Menara":
+    df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
+if selected_struktur != "Semua Struktur Tower":
+    df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
+
+
+# ==========================================
+# 5. BINGKAI PETA INTERAKTIF (RENDERING DATA HASIL FILTER)
+# ==========================================
+st.markdown('<div class="map-card"><div class="map-card-header">🌐 PETA MENARA TELEKOMUNIKASI</div><div class="map-card-body">', unsafe_allow_html=True)
+
+m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="OpenStreetMap")
+
+# Menggambar batas administrasi kota
+if batas_kota:
+    folium.GeoJson(
+        data=batas_kota,
+        style_function=lambda feature: {
+            "fillColor": "#22c55e",
+            "color": "#16a34a",
+            "weight": 2,
+            "fillOpacity": 0.08,
+        }
+    ).add_to(m)
+
+# Memetakan marker di peta HANYA berdasarkan baris data yang lolos filter
+if not df_filtered.empty:
+    marker_cluster = MarkerCluster(
+        options={'maxClusterRadius': 40, 'disableClusteringAtZoom': 14}
+    ).add_to(m)
+    
+    for _, row in df_filtered.iterrows():
+        popup_html = f"""
+        <div style='font-family:Arial; font-size:12px; width:220px;'>
+            <b>Detail Menara BTS</b><hr style='margin:4px 0;'>
+            <b>Pemilik:</b> {row['pemilik_menara']}<br>
+            <b>Kecamatan:</b> {row['nama_kecamatan']}<br>
+            <b>Kelurahan:</b> {row['nama_desa_kelurahan']}<br>
+            <b>Struktur:</b> {row['struktur_tower']}<br>
+            <b>Tinggi:</b> {row['tinggi_tower']} {row['satuan']}<br>
+            <b>Tahun:</b> {row['tahun']}<br>
+            <hr style='margin:4px 0;'>
+            <b>Lat:</b> {row['lat']}<br><b>Long:</b> {row['long']}
+        </div>
+        """
+        
+        folium.Marker(
+            location=[row['lat'], row['long']],
+            popup=folium.Popup(popup_html, max_width=250),
+            icon=folium.Icon(color="red", icon="signal", prefix="fa")
+        ).add_to(marker_cluster)
+
 st_folium(m, width="100%", height=500, returned_objects=[])
 st.markdown('</div></div>', unsafe_allow_html=True)
 
-# ==========================================
-# 5. TABEL DATA TABULAR (JUDUL SESUAI KEBUTUHAN)
-# ==========================================
-st.markdown('<div class="table-section-title">📊 DATA MENARA TELEKOMUNIKASI</div>', unsafe_allow_html=True)
 
-if len(rows_list) > 0:
-    df = pd.DataFrame(rows_list)
-    st.dataframe(
-        df, 
-        use_container_width=True, 
-        hide_index=True,
-        column_config={
-            "long": st.column_config.NumberColumn(format="%.6f"),
-            "lat": st.column_config.NumberColumn(format="%.6f"),
-        }
-    )
-else:
-    st.info("Belum ada data menara yang dapat dimuat ke dalam tabel.")
+# ==========================================
+# 6. TABEL DATA TABULAR HAsil FILTER
