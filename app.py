@@ -224,17 +224,18 @@ if show_menara_layer and not df_filtered.empty:
     ).add_to(m)
     
     for _, row in df_filtered.iterrows():
-        # Memperbaiki penulisan string popup menggunakan satu baris gabungan teks agar bebas dari syntax error tanda kutip
-        popup_html = "<div style='font-family:Arial; font-size:12px; width:220px; color:#1e293b;'>" + \
-                     "<b style='color:#0b3c5d;'>Detail Menara Telekomunikasi</b><hr style='margin:4px 0;'>" + \
-                     "<b>Pemilik:</b> " + str(row['pemilik_menara']) + "<br>" + \
-                     "<b>Kecamatan:</b> " + str(row['nama_kecamatan']) + "<br>" + \
-                     "<b>Kelurahan:</b> " + str(row['nama_desa_kelurahan']) + "<br>" + \
-                     "<b>Struktur:</b> " + str(row['struktur_tower']) + "<br>" + \
-                     "<b>Tinggi:</b> " + str(row['tinggi_tower']) + " " + str(row['satuan']) + "<br>" + \
-                     "<b>Tahun:</b> " + str(row['tahun']) + "<br><hr style='margin:4px 0;'>" + \
-                     "<b>Lat:</b> " + str(row['lat']) + "<br><b>Long:</b> " + str(row['long']) + "</div>"
+        # Konstruksi teks popup satu baris kontinu untuk menghindari jebakan indentasi
+        p_html = "<div style='font-family:Arial; font-size:12px; width:220px; color:#1e293b;'>" + \
+                 "<b style='color:#0b3c5d;'>Detail Menara Telekomunikasi</b><hr style='margin:4px 0;'>" + \
+                 "<b>Pemilik:</b> " + str(row['pemilik_menara']) + "<br>" + \
+                 "<b>Kecamatan:</b> " + str(row['nama_kecamatan']) + "<br>" + \
+                 "<b>Kelurahan:</b> " + str(row['nama_desa_kelurahan']) + "<br>" + \
+                 "<b>Struktur:</b> " + str(row['struktur_tower']) + "<br>" + \
+                 "<b>Tinggi:</b> " + str(row['tinggi_tower']) + " " + str(row['satuan']) + "<br>" + \
+                 "<b>Tahun:</b> " + str(row['tahun']) + "<br><hr style='margin:4px 0;'>" + \
+                 "<b>Lat:</b> " + str(row['lat']) + "<br><b>Long:</b> " + str(row['long']) + "</div>"
         
         if has_custom_icon:
             icon_obj = folium.CustomIcon(custom_icon_path, icon_size=(35, 35), icon_anchor=(17.5, 35))
         else:
+            icon_obj = folium.Icon(color="red", icon="signal", prefix="fa")
