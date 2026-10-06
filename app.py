@@ -4,7 +4,6 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 import json
 import pandas as pd
-import os
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN & STYLE CSS
@@ -220,10 +219,6 @@ if batas_kota:
         }
     ).add_to(m)
 
-# Memeriksa apakah file gambar kustom tersedia di server local Streamlit
-custom_icon_path = "tower_icon.png"
-has_custom_icon = os.path.exists(custom_icon_path)
-
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 40, 'disableClusteringAtZoom': 14}
@@ -243,18 +238,20 @@ if not df_filtered.empty:
             <b>Lat:</b> {row['lat']}<br><b>Long:</b> {row['long']}
         </div>
         """
-        
-        # Logika penggantian simbol gambar kustom
-        if has_custom_icon:
-            icon_obj = folium.CustomIcon(
-                custom_icon_path,
-                icon_size=(35, 35),       # Mengatur ukuran lebar & tinggi gambar penanda
-                icon_anchor=(17.5, 35)    # Menyeimbangkan titik tumpu koordinat di kaki menara
-            )
-        else:
-            # Cadangan ikon bawaan apabila file gambar di GitHub belum diunggah
-            icon_obj = folium.Icon(color="blue", icon="broadcast-tower", prefix="fa")
-            
         folium.Marker(
             location=[row['lat'], row['long']],
             popup=folium.Popup(popup_html, max_width=250),
+            icon=folium.Icon(color="red", icon="signal", prefix="fa")
+        ).add_to(marker_cluster)
+
+st_folium(m, width="100%", height=480, key="webgis_map", returned_objects=[])
+st.markdown('</div></div>', unsafe_allow_html=True)
+
+
+# ==========================================
+# 6. PANEL TABEL DATA TABULAR (STRUKTUR TERBENTUK MERATA TANPA LOGIKA IF)
+# ==========================================
+st.markdown('<div class="table-section-title">📊 DATA MENARA TELEKOMUNIKASI</div>', unsafe_allow_html=True)
+
+# Memasang fungsi render langsung tanpa percabangan agar tidak ada risiko celah spasi
+st.dataframe(df_filtered, use_container_width=True, hide_index=True)
