@@ -12,31 +12,28 @@ import os
 st.set_page_config(
     page_title="Visualisasi Data Infrastruktur Menara Telekomunikasi",
     layout="wide",
-    initial_sidebar_state="expanded"  # Sidebar dipaksa terbuka untuk meniru panel kiri
+    initial_sidebar_state="expanded"
 )
 
-# Kustomisasi CSS Tingkat Lanjut untuk Meniru Persis Dashboard Dukcapil Kemendagri
+# Kustomisasi CSS Tingkat Lanjut untuk Meniru Dasbor Profesional
 st.markdown("""
     <style>
-    /* Mengubah warna latar belakang aplikasi utama */
     .main { background-color: #f8fafc; }
     
-    /* Mengatur style container sidebar kiri agar mirip menu instansi */
     div[data-testid="stSidebarUserContent"] {
         background-color: #ffffff !important;
         padding: 15px !important;
         border-right: 1px solid #cbd5e1;
     }
     
-    /* Header Utama Atas (Biru Donker Kemendagri Style) */
     .gov-header {
-        background-color: #0b3c5d; /* Biru khas instansi */
+        background-color: #0b3c5d;
         padding: 12px 25px;
         color: #ffffff;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: -75px; /* Menghilangkan whitespace bawaan streamlit */
+        margin-top: -75px;
         margin-left: -4rem;
         margin-right: -4rem;
         margin-bottom: 20px;
@@ -59,20 +56,18 @@ st.markdown("""
         font-family: Arial, sans-serif;
     }
     
-    /* Sub-Heading untuk Panel Samping */
     .panel-section-title {
         background-color: #f1f5f9;
         padding: 6px 10px;
         font-size: 12px;
         font-weight: bold;
         color: #1e293b;
-        border-left: 4px solid #f59e0b; /* Aksen kuning/oranye di kiri */
+        border-left: 4px solid #f59e0b;
         margin-top: 15px;
         margin-bottom: 10px;
         text-transform: uppercase;
     }
     
-    /* Bingkai Card Peta Utama */
     .map-container-box {
         border: 1px solid #cbd5e1;
         border-radius: 4px;
@@ -80,7 +75,6 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
-    /* Bingkai Card Tabel Bawah */
     .table-container-box {
         margin-top: 15px;
         background-color: #ffffff;
@@ -161,7 +155,6 @@ df_all = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
 # 4. PANEL PANEL KIRI (SIDEBAR CONTROL DAN DAFTAR LAYER)
 # ==========================================
 with st.sidebar:
-    # Seksi 1: Cari Data Berdasarkan Wilayah
     st.markdown('<div class="panel-section-title">🔍 Cari Data Berdasarkan Wilayah</div>', unsafe_allow_html=True)
     
     list_kec = ["-- Semua Kecamatan --"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
@@ -177,14 +170,12 @@ with st.sidebar:
     selected_pemilik = st.selectbox("Pemilik Menara", ["-- Semua Pemilik --"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"]))
     selected_struktur = st.selectbox("Struktur Tower", ["-- Semua Struktur --"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"]))
 
-    # Seksi 2: Kontrol Layer (Daftar Peta)
     st.sidebar.markdown('<div class="panel-section-title">📂 Daftar Peta (Lapisan Layer)</div>', unsafe_allow_html=True)
     show_batas_prov = st.sidebar.checkbox("📁 Batas Provinsi", value=True)
     show_batas_kab = st.sidebar.checkbox("📁 Batas Kabupaten/Kota", value=True)
     show_batas_kec = st.sidebar.checkbox("📁 Batas Kecamatan", value=True)
     show_menara_layer = st.sidebar.checkbox("📍 Sebaran Titik Menara BTS", value=True)
     
-    # Statistik Singkat Ringkasan Wilayah
     st.sidebar.markdown('<div class="panel-section-title">📊 Ringkasan Statistik</div>', unsafe_allow_html=True)
     st.sidebar.metric(label="Jumlah Menara Terfilter", value=f"{len(df_all)} Unit")
 
@@ -203,12 +194,9 @@ if selected_struktur != "-- Semua Struktur --":
 # ==========================================
 # 5. AREA UTAMA KANAN (MAP DAN DATA SPASIAL TABULAR)
 # ==========================================
-
-# A. KOMPONEN KANVAS PETA (MENGGUNAKAN CITRA SATELIT / HYBRID)
 st.markdown('<div class="map-container-box">', unsafe_allow_html=True)
 
-# Membuat peta dasar Citra Satelit Esri (Sama seperti gaya peta kependudukan gambar user)
-# Basemap diganti ke Satelit agar poligon kuning/hijau batas wilayah terlihat menyala kontras
+# Membuat peta dasar Citra Satelit Esri agar kontras wilayah terlihat jelas
 m = folium.Map(
     location=[-6.9175, 107.6191], 
     zoom_start=12, 
@@ -216,28 +204,37 @@ m = folium.Map(
     attr="Esri World Imagery"
 )
 
-# Plotting Poligon Batas Administrasi
 if (show_batas_prov or show_batas_kab or show_batas_kec) and batas_kota:
     folium.GeoJson(
         data=batas_kota,
         style_function=lambda feature: {
-            "fillColor": "#eab308",  # Warna kuning terang transparan khas GIS kependudukan
-            "color": "#eab308",      # Garis tepi kuning neon tajam
+            "fillColor": "#eab308",
+            "color": "#eab308",
             "weight": 1.5,
             "fillOpacity": 0.05,
         }
     ).add_to(m)
 
-# Memeriksa File Gambar Penanda Kustom
 custom_icon_path = "tower_icon.png"
 has_custom_icon = os.path.exists(custom_icon_path)
 
-# Plotting Titik Menara BTS
 if show_menara_layer and not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 40, 'disableClusteringAtZoom': 14}
     ).add_to(m)
     
     for _, row in df_filtered.iterrows():
-        popup_html = f"""
-        <div style='font-family:Arial; font-size:12px; width:220px; color:#1e293b;'>
+        # Memperbaiki penulisan string popup menggunakan satu baris gabungan teks agar bebas dari syntax error tanda kutip
+        popup_html = "<div style='font-family:Arial; font-size:12px; width:220px; color:#1e293b;'>" + \
+                     "<b style='color:#0b3c5d;'>Detail Menara Telekomunikasi</b><hr style='margin:4px 0;'>" + \
+                     "<b>Pemilik:</b> " + str(row['pemilik_menara']) + "<br>" + \
+                     "<b>Kecamatan:</b> " + str(row['nama_kecamatan']) + "<br>" + \
+                     "<b>Kelurahan:</b> " + str(row['nama_desa_kelurahan']) + "<br>" + \
+                     "<b>Struktur:</b> " + str(row['struktur_tower']) + "<br>" + \
+                     "<b>Tinggi:</b> " + str(row['tinggi_tower']) + " " + str(row['satuan']) + "<br>" + \
+                     "<b>Tahun:</b> " + str(row['tahun']) + "<br><hr style='margin:4px 0;'>" + \
+                     "<b>Lat:</b> " + str(row['lat']) + "<br><b>Long:</b> " + str(row['long']) + "</div>"
+        
+        if has_custom_icon:
+            icon_obj = folium.CustomIcon(custom_icon_path, icon_size=(35, 35), icon_anchor=(17.5, 35))
+        else:
