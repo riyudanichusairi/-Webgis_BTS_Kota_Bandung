@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Kustomisasi CSS Tingkat Lanjut untuk Meniru Dasbor Profesional
+# Kustomisasi CSS Tingkat Lanjut - Diperbaiki agar fleksibel dan tidak pecah
 st.markdown("""
     <style>
     .main { background-color: #f8fafc; }
@@ -40,7 +40,7 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
     .gov-header-title {
-        font-family: 'Arial Black', Gadget, sans-serif;
+        font-family: 'Helvetica Neue', Arial, sans-serif;
         font-size: 16px;
         font-weight: bold;
         letter-spacing: 0.5px;
@@ -67,21 +67,6 @@ st.markdown("""
         margin-bottom: 10px;
         text-transform: uppercase;
     }
-    
-    .map-container-box {
-        border: 1px solid #cbd5e1;
-        border-radius: 4px;
-        background-color: #ffffff;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    
-    .table-container-box {
-        margin-top: 15px;
-        background-color: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 4px;
-        padding: 10px;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -95,7 +80,7 @@ st.markdown("""
             <div class="gov-header-subtitle">DIREKTORAT JENDERAL PENYELENGGARAAN POS DAN INFORMATIKA - KEMENTERIAN KOMUNIKASI DAN DIGITAL</div>
         </div>
         <div class="gov-header-right">
-            🏠 Home &nbsp;|&nbsp; 🌐 Diskominfo Kota Bandung
+            <b>🏠 Home &nbsp;|&nbsp; 🌐 Diskominfo Kota Bandung</b>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -194,7 +179,6 @@ if selected_struktur != "-- Semua Struktur --":
 # ==========================================
 # 5. AREA UTAMA KANAN (MAP DAN DATA SPASIAL TABULAR)
 # ==========================================
-st.markdown('<div class="map-container-box">', unsafe_allow_html=True)
 
 # Membuat peta dasar Citra Satelit Esri agar kontras wilayah terlihat jelas
 m = folium.Map(
@@ -224,7 +208,6 @@ if show_menara_layer and not df_filtered.empty:
     ).add_to(m)
     
     for _, row in df_filtered.iterrows():
-        # Konstruksi teks popup satu baris kontinu untuk menghindari jebakan indentasi
         p_html = "<div style='font-family:Arial; font-size:12px; width:220px; color:#1e293b;'>" + \
                  "<b style='color:#0b3c5d;'>Detail Menara Telekomunikasi</b><hr style='margin:4px 0;'>" + \
                  "<b>Pemilik:</b> " + str(row['pemilik_menara']) + "<br>" + \
@@ -239,3 +222,14 @@ if show_menara_layer and not df_filtered.empty:
             icon_obj = folium.CustomIcon(custom_icon_path, icon_size=(35, 35), icon_anchor=(17.5, 35))
         else:
             icon_obj = folium.Icon(color="red", icon="signal", prefix="fa")
+            
+        folium.Marker(
+            location=[row['lat'], row['long']],
+            popup=folium.Popup(p_html, max_width=250),
+            icon=icon_obj
+        ).add_to(marker_cluster)
+
+# Merender peta tanpa pembungkus div kaku agar langsung mengunci posisi di layar utama kanan
+st_folium(m, width="100%", height=450, key="webgis_map", returned_objects=[])
+
+# Merender tabel tabular tepat di bawah peta secara fleksibel
