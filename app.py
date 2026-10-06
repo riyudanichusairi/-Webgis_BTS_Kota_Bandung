@@ -86,7 +86,7 @@ st.markdown("""
         text-transform: uppercase;
         border-top-left-radius: 4px;
         border-top-right-radius: 4px;
-        margin-top: 10px;
+        margin-top: 25px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -120,7 +120,6 @@ def load_geojson(file_path):
 batas_kota = load_geojson("batas_kota_bandung.geojson")
 data_bts = load_geojson("BTS_kota_bandung.geojson")
 
-# Menyusun database awal untuk kebutuhan filter dan tabel
 raw_rows = []
 if data_bts:
     for idx, feature in enumerate(data_bts["features"], start=1):
@@ -154,18 +153,16 @@ if data_bts:
                 "tahun": get_prop(["tahun", "tahun_berdiri", "thn"])
             })
 
-# Mengubah data mentah ke Pandas Dataframe
 df_all = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
     "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
     "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", "satuan", "tahun"
 ])
 
 # ==========================================
-# 4. PANEL FILTER DATA (4 KELOMPOK PILIHAN)
+# 4. PANEL FILTER DATA
 # ==========================================
 st.markdown('<div class="table-section-title">🔍 FILTER DATA MENARA</div>', unsafe_allow_html=True)
 
-# Membuat komponen kontainer putih untuk filter
 with st.container():
     st.markdown('<div class="filter-card">', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
@@ -175,7 +172,6 @@ with st.container():
         selected_kec = st.selectbox("Nama Kecamatan:", list_kec)
         
     with col2:
-        # Filter kelurahan bersifat dinamis (mengikuti kecamatan yang dipilih)
         if selected_kec != "Semua Kecamatan":
             df_filtered_kec = df_all[df_all["nama_kecamatan"] == selected_kec]
             list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_filtered_kec["nama_desa_kelurahan"].unique() if x != "-"])
@@ -193,9 +189,8 @@ with st.container():
         
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- PROSES PENYARINGAN DATAFRAME ---
+# Eksekusi Filter
 df_filtered = df_all.copy()
-
 if selected_kec != "Semua Kecamatan":
     df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
 if selected_kel != "Semua Desa/Kelurahan":
@@ -207,13 +202,13 @@ if selected_struktur != "Semua Struktur Tower":
 
 
 # ==========================================
-# 5. BINGKAI PETA INTERAKTIF (RENDERING DATA HASIL FILTER)
+# 5. PANEL PETA INTERAKTIF 
 # ==========================================
 st.markdown('<div class="map-card"><div class="map-card-header">🌐 PETA MENARA TELEKOMUNIKASI</div><div class="map-card-body">', unsafe_allow_html=True)
 
+# Membuat peta dasar
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="OpenStreetMap")
 
-# Menggambar batas administrasi kota
 if batas_kota:
     folium.GeoJson(
         data=batas_kota,
@@ -225,7 +220,6 @@ if batas_kota:
         }
     ).add_to(m)
 
-# Memetakan marker di peta HANYA berdasarkan baris data yang lolos filter
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 40, 'disableClusteringAtZoom': 14}
@@ -245,16 +239,24 @@ if not df_filtered.empty:
             <b>Lat:</b> {row['lat']}<br><b>Long:</b> {row['long']}
         </div>
         """
-        
         folium.Marker(
             location=[row['lat'], row['long']],
             popup=folium.Popup(popup_html, max_width=250),
             icon=folium.Icon(color="red", icon="signal", prefix="fa")
         ).add_to(marker_cluster)
 
-st_folium(m, width="100%", height=500, returned_objects=[])
+# RENDER PETA UTAMA
+# Menambahkan parameter key agar render map stabil dan tidak memakan slot objek di bawahnya
+st_folium(m, width="100%", height=480, key="webgis_map", returned_objects=[])
+
 st.markdown('</div></div>', unsafe_allow_html=True)
 
 
 # ==========================================
-# 6. TABEL DATA TABULAR HAsil FILTER
+# 6. PANEL TABEL DATA TABULAR (DIPASTIKAN MUNCUL)
+# ==========================================
+st.markdown('<div class="table-section-title">📊 DATA MENARA TELEKOMUNIKASI</div>', unsafe_allow_html=True)
+
+# Container khusus untuk tabel agar terisolasi dengan baik dari div peta
+with st.container():
+    if not df_filtered.empty:
