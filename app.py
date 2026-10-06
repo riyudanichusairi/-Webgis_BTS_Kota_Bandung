@@ -4,111 +4,110 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 import json
 import pandas as pd
+import os
 
 # ==========================================
-# 1. KONFIGURASI HALAMAN & STYLE CSS
+# 1. KONFIGURASI HALAMAN UTAMA (FULL SCREEN LAYOUT)
 # ==========================================
 st.set_page_config(
-    page_title="Aplikasi GIS Menara Telekomunikasi",
+    page_title="Visualisasi Data Infrastruktur Menara Telekomunikasi",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"  # Sidebar dipaksa terbuka untuk meniru panel kiri
 )
 
+# Kustomisasi CSS Tingkat Lanjut untuk Meniru Persis Dashboard Dukcapil Kemendagri
 st.markdown("""
     <style>
-    .main { background-color: #f4f6f9; }
+    /* Mengubah warna latar belakang aplikasi utama */
+    .main { background-color: #f8fafc; }
     
-    .header-container {
+    /* Mengatur style container sidebar kiri agar mirip menu instansi */
+    div[data-testid="stSidebarUserContent"] {
+        background-color: #ffffff !important;
+        padding: 15px !important;
+        border-right: 1px solid #cbd5e1;
+    }
+    
+    /* Header Utama Atas (Biru Donker Kemendagri Style) */
+    .gov-header {
+        background-color: #0b3c5d; /* Biru khas instansi */
+        padding: 12px 25px;
+        color: #ffffff;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: #ffffff;
-        padding: 15px 30px;
-        border-bottom: 2px solid #e5e7eb;
+        margin-top: -75px; /* Menghilangkan whitespace bawaan streamlit */
+        margin-left: -4rem;
+        margin-right: -4rem;
         margin-bottom: 20px;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
-    .header-left h1 {
-        font-family: 'Helvetica Neue', Arial, sans-serif;
-        font-size: 24px;
-        font-weight: 700;
-        color: #334155;
-        margin: 0;
-    }
-    .header-right {
-        font-family: Arial, sans-serif;
-        font-size: 11px;
-        color: #64748b;
-        text-align: right;
-        line-height: 1.4;
-    }
-    
-    .map-card {
-        background-color: #ffffff;
-        border-radius: 4px;
-        border: 1px solid #cbd5e1;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    }
-    .map-card-header {
-        background-color: #1e3a8a;
-        color: #ffffff;
-        padding: 10px 15px;
+    .gov-header-title {
+        font-family: 'Arial Black', Gadget, sans-serif;
+        font-size: 16px;
         font-weight: bold;
-        font-size: 14px;
-        text-transform: uppercase;
         letter-spacing: 0.5px;
-        border-top-left-radius: 3px;
-        border-top-right-radius: 3px;
     }
-    .map-card-body {
-        padding: 0px;
+    .gov-header-subtitle {
+        font-size: 11px;
+        color: #93c5fd;
+        font-family: Arial, sans-serif;
+        margin-top: 2px;
+    }
+    .gov-header-right {
+        font-size: 12px;
+        font-family: Arial, sans-serif;
     }
     
-    .filter-card {
-        background-color: #ffffff;
-        padding: 15px;
+    /* Sub-Heading untuk Panel Samping */
+    .panel-section-title {
+        background-color: #f1f5f9;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: bold;
+        color: #1e293b;
+        border-left: 4px solid #f59e0b; /* Aksen kuning/oranye di kiri */
+        margin-top: 15px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+    
+    /* Bingkai Card Peta Utama */
+    .map-container-box {
         border: 1px solid #cbd5e1;
         border-radius: 4px;
-        margin-bottom: 20px;
+        background-color: #ffffff;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
-    .table-section-title {
+    /* Bingkai Card Tabel Bawah */
+    .table-container-box {
+        margin-top: 15px;
         background-color: #ffffff;
-        padding: 12px 15px;
-        font-weight: bold;
-        font-size: 14px;
-        color: #1e293b;
         border: 1px solid #cbd5e1;
-        border-bottom: none;
-        text-transform: uppercase;
-        border-top-left-radius: 4px;
-        border-top-right-radius: 4px;
-        margin-top: 25px;
+        border-radius: 4px;
+        padding: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. KOMPONEN HEADER ATAS
+# 2. KOMPONEN HEADER UTAMA ATAS (TOP BAR)
 # ==========================================
 st.markdown("""
-    <div class="header-container">
-        <div class="header-left">
-            <h1>Aplikasi GIS <span style="font-size:14px; font-weight:normal; color:#64748b;">(Geographic Information System)</span></h1>
-            <div style="font-size: 18px; font-weight: 600; color: #1e3a8a; margin-top:2px;">Menara Telekomunikasi Kota Bandung <span style="font-size:12px; font-weight:normal; color:#64748b;">(Ver. 1.0)</span></div>
+    <div class="gov-header">
+        <div>
+            <div class="gov-header-title">🏛️ VISUALISASI DATA INFRASTRUKTUR TELEKOMUNIKASI</div>
+            <div class="gov-header-subtitle">DIREKTORAT JENDERAL PENYELENGGARAAN POS DAN INFORMATIKA - KEMENTERIAN KOMUNIKASI DAN DIGITAL</div>
         </div>
-        <div class="header-right">
-            🏛️ Dinas Komunikasi dan Informatika Kota Bandung<br>
-            🏢 Balai Kota, Jl. Wastukencana No. 2, Telp./Fax. (022) 4232338
+        <div class="gov-header-right">
+            🏠 Home &nbsp;|&nbsp; 🌐 Diskominfo Kota Bandung
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. FUNGSI LOAD DATA & PRE-PROCESSING
+# 3. FUNGSI LOAD DATA DATASET SPASIAL
 # ==========================================
 def load_geojson(file_path):
     try:
@@ -159,99 +158,86 @@ df_all = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
 ])
 
 # ==========================================
-# 4. PANEL FILTER DATA
+# 4. PANEL PANEL KIRI (SIDEBAR CONTROL DAN DAFTAR LAYER)
 # ==========================================
-st.markdown('<div class="table-section-title">🔍 FILTER DATA MENARA</div>', unsafe_allow_html=True)
-
-with st.container():
-    st.markdown('<div class="filter-card">', unsafe_allow_html=True)
-    col1, col2, col3, col4 = st.columns(4)
+with st.sidebar:
+    # Seksi 1: Cari Data Berdasarkan Wilayah
+    st.markdown('<div class="panel-section-title">🔍 Cari Data Berdasarkan Wilayah</div>', unsafe_allow_html=True)
     
-    with col1:
-        list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
-        selected_kec = st.selectbox("Nama Kecamatan:", list_kec)
-        
-    with col2:
-        if selected_kec != "Semua Kecamatan":
-            df_filtered_kec = df_all[df_all["nama_kecamatan"] == selected_kec]
-            list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_filtered_kec["nama_desa_kelurahan"].unique() if x != "-"])
-        else:
-            list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
-        selected_kel = st.selectbox("Nama Desa/Kelurahan:", list_kel)
-        
-    with col3:
-        list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
-        selected_pemilik = st.selectbox("Pemilik Menara:", list_pemilik)
-        
-    with col4:
-        list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
-        selected_struktur = st.selectbox("Struktur Tower:", list_struktur)
-        
-    st.markdown('</div>', unsafe_allow_html=True)
+    list_kec = ["-- Semua Kecamatan --"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
+    selected_kec = st.selectbox("Kecamatan", list_kec)
+    
+    if selected_kec != "-- Semua Kecamatan --":
+        df_filtered_kec = df_all[df_all["nama_kecamatan"] == selected_kec]
+        list_kel = ["-- Semua Desa/Kelurahan --"] + sorted([x for x in df_filtered_kec["nama_desa_kelurahan"].unique() if x != "-"])
+    else:
+        list_kel = ["-- Semua Desa/Kelurahan --"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
+    selected_kel = st.selectbox("Kelurahan / Desa", list_kel)
+    
+    selected_pemilik = st.selectbox("Pemilik Menara", ["-- Semua Pemilik --"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"]))
+    selected_struktur = st.selectbox("Struktur Tower", ["-- Semua Struktur --"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"]))
 
-# Eksekusi Operasi Penjaringan Data
+    # Seksi 2: Kontrol Layer (Daftar Peta)
+    st.sidebar.markdown('<div class="panel-section-title">📂 Daftar Peta (Lapisan Layer)</div>', unsafe_allow_html=True)
+    show_batas_prov = st.sidebar.checkbox("📁 Batas Provinsi", value=True)
+    show_batas_kab = st.sidebar.checkbox("📁 Batas Kabupaten/Kota", value=True)
+    show_batas_kec = st.sidebar.checkbox("📁 Batas Kecamatan", value=True)
+    show_menara_layer = st.sidebar.checkbox("📍 Sebaran Titik Menara BTS", value=True)
+    
+    # Statistik Singkat Ringkasan Wilayah
+    st.sidebar.markdown('<div class="panel-section-title">📊 Ringkasan Statistik</div>', unsafe_allow_html=True)
+    st.sidebar.metric(label="Jumlah Menara Terfilter", value=f"{len(df_all)} Unit")
+
+# --- MENJALANKAN STRATEGI FILTER DATA PANDAS ---
 df_filtered = df_all.copy()
-if selected_kec != "Semua Kecamatan":
+if selected_kec != "-- Semua Kecamatan --":
     df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
-if selected_kel != "Semua Desa/Kelurahan":
+if selected_kel != "-- Semua Desa/Kelurahan --":
     df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
-if selected_pemilik != "Semua Pemilik Menara":
+if selected_pemilik != "-- Semua Pemilik --":
     df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
-if selected_struktur != "Semua Struktur Tower":
+if selected_struktur != "-- Semua Struktur --":
     df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
 
 
 # ==========================================
-# 5. PANEL PETA INTERAKTIF 
+# 5. AREA UTAMA KANAN (MAP DAN DATA SPASIAL TABULAR)
 # ==========================================
-st.markdown('<div class="map-card"><div class="map-card-header">🌐 PETA MENARA TELEKOMUNIKASI</div><div class="map-card-body">', unsafe_allow_html=True)
 
-m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="OpenStreetMap")
+# A. KOMPONEN KANVAS PETA (MENGGUNAKAN CITRA SATELIT / HYBRID)
+st.markdown('<div class="map-container-box">', unsafe_allow_html=True)
 
-if batas_kota:
+# Membuat peta dasar Citra Satelit Esri (Sama seperti gaya peta kependudukan gambar user)
+# Basemap diganti ke Satelit agar poligon kuning/hijau batas wilayah terlihat menyala kontras
+m = folium.Map(
+    location=[-6.9175, 107.6191], 
+    zoom_start=12, 
+    tiles="https://arcgisonline.com{z}/{y}/{x}",
+    attr="Esri World Imagery"
+)
+
+# Plotting Poligon Batas Administrasi
+if (show_batas_prov or show_batas_kab or show_batas_kec) and batas_kota:
     folium.GeoJson(
         data=batas_kota,
         style_function=lambda feature: {
-            "fillColor": "#22c55e",
-            "color": "#16a34a",
-            "weight": 2,
-            "fillOpacity": 0.08,
+            "fillColor": "#eab308",  # Warna kuning terang transparan khas GIS kependudukan
+            "color": "#eab308",      # Garis tepi kuning neon tajam
+            "weight": 1.5,
+            "fillOpacity": 0.05,
         }
     ).add_to(m)
 
-if not df_filtered.empty:
+# Memeriksa File Gambar Penanda Kustom
+custom_icon_path = "tower_icon.png"
+has_custom_icon = os.path.exists(custom_icon_path)
+
+# Plotting Titik Menara BTS
+if show_menara_layer and not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 40, 'disableClusteringAtZoom': 14}
     ).add_to(m)
     
     for _, row in df_filtered.iterrows():
         popup_html = f"""
-        <div style='font-family:Arial; font-size:12px; width:220px;'>
-            <b>Detail Menara BTS</b><hr style='margin:4px 0;'>
-            <b>Pemilik:</b> {row['pemilik_menara']}<br>
-            <b>Kecamatan:</b> {row['nama_kecamatan']}<br>
-            <b>Kelurahan:</b> {row['nama_desa_kelurahan']}<br>
-            <b>Struktur:</b> {row['struktur_tower']}<br>
-            <b>Tinggi:</b> {row['tinggi_tower']} {row['satuan']}<br>
-            <b>Tahun:</b> {row['tahun']}<br>
-            <hr style='margin:4px 0;'>
-            <b>Lat:</b> {row['lat']}<br><b>Long:</b> {row['long']}
-        </div>
-        """
-        folium.Marker(
-            location=[row['lat'], row['long']],
-            popup=folium.Popup(popup_html, max_width=250),
-            icon=folium.Icon(color="red", icon="signal", prefix="fa")
-        ).add_to(marker_cluster)
-
-st_folium(m, width="100%", height=480, key="webgis_map", returned_objects=[])
-st.markdown('</div></div>', unsafe_allow_html=True)
-
-
-# ==========================================
-# 6. PANEL TABEL DATA TABULAR (STRUKTUR TERBENTUK MERATA TANPA LOGIKA IF)
-# ==========================================
-st.markdown('<div class="table-section-title">📊 DATA MENARA TELEKOMUNIKASI</div>', unsafe_allow_html=True)
-
-# Memasang fungsi render langsung tanpa percabangan agar tidak ada risiko celah spasi
-st.dataframe(df_filtered, use_container_width=True, hide_index=True)
+        <div style='font-family:Arial; font-size:12px; width:220px; color:#1e293b;'>
