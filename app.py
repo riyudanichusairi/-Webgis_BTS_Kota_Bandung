@@ -189,7 +189,7 @@ with st.container():
         
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Eksekusi Filter
+# Eksekusi Operasi Penjaringan Data
 df_filtered = df_all.copy()
 if selected_kec != "Semua Kecamatan":
     df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
@@ -206,7 +206,6 @@ if selected_struktur != "Semua Struktur Tower":
 # ==========================================
 st.markdown('<div class="map-card"><div class="map-card-header">🌐 PETA MENARA TELEKOMUNIKASI</div><div class="map-card-body">', unsafe_allow_html=True)
 
-# Membuat peta dasar
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="OpenStreetMap")
 
 if batas_kota:
@@ -245,18 +244,20 @@ if not df_filtered.empty:
             icon=folium.Icon(color="red", icon="signal", prefix="fa")
         ).add_to(marker_cluster)
 
-# RENDER PETA UTAMA
-# Menambahkan parameter key agar render map stabil dan tidak memakan slot objek di bawahnya
 st_folium(m, width="100%", height=480, key="webgis_map", returned_objects=[])
-
 st.markdown('</div></div>', unsafe_allow_html=True)
 
 
 # ==========================================
-# 6. PANEL TABEL DATA TABULAR (DIPASTIKAN MUNCUL)
+# 6. PANEL TABEL DATA TABULAR 
 # ==========================================
 st.markdown('<div class="table-section-title">📊 DATA MENARA TELEKOMUNIKASI</div>', unsafe_allow_html=True)
 
-# Container khusus untuk tabel agar terisolasi dengan baik dari div peta
 with st.container():
     if not df_filtered.empty:
+        st.dataframe(
+            df_filtered, 
+            use_container_width=True, 
+            hide_index=True,
+            column_config={
+                "long": st.column_config.NumberColumn(format="%.6f"),
