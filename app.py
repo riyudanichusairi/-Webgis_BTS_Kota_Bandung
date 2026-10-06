@@ -249,12 +249,9 @@ st.markdown('</div></div>', unsafe_allow_html=True)
 
 
 # ==========================================
-# 6. PANEL TABEL DATA TABULAR 
+# 6. PANEL TABEL DATA TABULAR (STRUKTUR TERBENTUK MERATA TANPA LOGIKA IF)
 # ==========================================
 st.markdown('<div class="table-section-title">📊 DATA MENARA TELEKOMUNIKASI</div>', unsafe_allow_html=True)
 
-with st.container():
-    if not df_filtered.empty:
-        # Merender tabel secara langsung dan bersih untuk menghindari potensi syntax error pada format angka koordinat
-        st.dataframe(df_filtered, use_container_width=True, hide_index=True)
-    else:
+# Memasang fungsi render langsung tanpa percabangan agar tidak ada risiko celah spasi
+st.dataframe(df_filtered, use_container_width=True, hide_index=True)
