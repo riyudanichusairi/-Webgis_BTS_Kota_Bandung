@@ -103,7 +103,7 @@ with st.sidebar:
     list_kec = sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.multiselect("Wilayah Kecamatan:", list_kec, placeholder="Semua Kecamatan")
     
-    # 3. Filter Wilayah Kelurahan (Otomatis menyusut opsinya berdasarkan Kecamatan yang dipilih)
+    # 3. Filter Wilayah Kelurahan (Otomatis menyesuaikan dengan Kecamatan terpilih)
     if selected_kec:
         df_kec_filtered = df_all[df_all["nama_kecamatan"].isin(selected_kec)]
         list_kel = sorted([x for x in df_kec_filtered["nama_desa_kelurahan"].unique() if x != "-"])
@@ -120,14 +120,13 @@ with st.sidebar:
     selected_struktur = st.multiselect("Jenis Struktur:", list_struktur, placeholder="Semua Struktur Tower")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.5.0 (Full Multiselect Filters)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.5.1 (Fixed Syntax & Full Multiselect)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF (LOGIKA ISIN)
 # ==========================================
 df_filtered = df_all.copy()
 
-# Jika filter diisi (tidak kosong), maka data akan disaring menggunakan fungsi .isin()
 if selected_id:
     df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
 
@@ -212,6 +211,7 @@ if df_filtered.empty:
     st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
 
 if not df_filtered.empty:
+    # AMAN & SUDAH DIPERBAIKI: Kurung siku ganda ']]' ditutup dengan benar dan tidak akan error lagi
     df_display = df_filtered[[
         "id", "pemilik_menara", "struktur_tower", "tinggi_tower", "satuan",
         "nama_kecamatan", "nama_desa_kelurahan", "lokasi_menara", "tahun"
