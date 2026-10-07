@@ -99,17 +99,13 @@ def load_and_process_data():
     if raw_rows:
         df = pd.DataFrame(raw_rows)
         
-        # 1. Bersihkan Kolom ID
-        df["id"] = df["id"].astype(str).str.split('.').str[0]
+        # Pembersihan paksa berekor pecahan desimal (.0) menggunakan lambda split secara aman
+        df["id"] = df["id"].astype(str).apply(lambda x: x.split('.')[0] if '.' in x else x)
+        df["struktur_tower"] = df["struktur_tower"].astype(str).apply(lambda x: x.split('.')[0] if '.' in x else x)
+        df["tahun"] = df["tahun"].astype(str).apply(lambda x: x.split('.')[0] if '.' in x else x)
         
-        # 2. Bersihkan Kolom Tipe Menara (struktur_tower)
-        df["struktur_tower"] = df["struktur_tower"].astype(str).str.split('.').str[0]
-        
-        # 3. Bersihkan Kolom Tahun
-        df["tahun"] = df["tahun"].astype(str).str.split('.').str[0]
-        
-        # 4. Bersihkan Kolom Tinggi (Ubah ke numerik, jika ada pecahan .0 otomatis dirapikan oleh Streamlit)
-        df["tinggi_tower"] = pd.to_numeric(df["tinggi_tower"], errors='coerce').fillna(0)
+        # Konversi kolom tinggi ke tipe data numerik bersih
+        df["tinggi_tower"] = pd.to_numeric(df["tinggi_tower"], errors='coerce').fillna(0).astype(int).astype(str)
     else:
         df = pd.DataFrame(columns=[
             "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
@@ -156,7 +152,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur, key=f"strk_{st.session_state.filter_key}")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.1 (Full Data Refined)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.2 (Stable Production)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -222,7 +218,7 @@ if not df_filtered.empty:
                 <tr><td><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>
                 <tr><td><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>
                 <tr><td><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
-                <tr><td><b>Dimensi</b></td><td>: {int(row['tinggi_tower'])} {row['satuan']}</td></tr>
+                <tr><td><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
                 <tr><td><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
             </table>
         </div>
