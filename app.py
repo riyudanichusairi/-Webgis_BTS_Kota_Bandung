@@ -35,6 +35,7 @@ def load_and_process_data():
             with open(path, "r", encoding="utf-8") as f: return json.load(f)
         except Exception: return None
 
+    # Mengintegrasikan berkas GeoJSON sesuai dengan nama file terbaru di repositori
     batas_kota = read_json("batas_kota_bandung.geojson")
     data_bts = read_json("BTS_kota_bandung.geojson")
     
@@ -107,7 +108,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.5 (Final Table Hotfix)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.6 (Updated GeoJSON)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
