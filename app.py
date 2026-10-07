@@ -205,7 +205,7 @@ if not df_filtered.empty:
     df_display.columns = [
         "ID", "Pemilik / Provider", "Jenis Struktur", "Tinggi", "Satuan",
         "Kecamatan", "Kelurahan", "Alamat Lokasi", 
-        "Tahun Berdiri", "Status Izin", "No. Izin / PBG", "Longitude", "Latitude"
+        "Tahun Berdiri"
     ]
     
     # Menampilkan tabel interaktif yang mendukung sorting, pencarian, dan resize kolom
