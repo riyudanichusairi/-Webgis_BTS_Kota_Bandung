@@ -120,7 +120,6 @@ def memicu_reset():
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:10px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    # Memperbaiki tombol on_click agar memanggil fungsi 'memicu_reset' dengan benar
     st.button("🔄 Reset Semua Filter", on_click=memicu_reset, use_container_width=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -142,7 +141,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur, key=f"strk_{st.session_state.filter_key}")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.2 (Stable Release)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.3 (Stable Release)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -231,3 +230,4 @@ c1, c2 = st.columns(2)
 with c1:
     st.write("**Top 10 Pemilik Menara Terbanyak**")
     if not df_filtered.empty:
+        chart_pemilik = df_filtered["pemilik_menara"].value_counts().head(10)
