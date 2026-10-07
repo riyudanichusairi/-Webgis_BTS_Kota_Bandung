@@ -1,3 +1,55 @@
+import streamlit as st
+import folium
+from folium.plugins import MarkerCluster
+from streamlit_folium import st_folium
+import json
+import pandas as pd
+
+# ==========================================
+# 1. KONFIGURASI HALAMAN & THEME GLOBAL
+# ==========================================
+st.set_page_config(
+    page_title="Dashboard WebGIS Menara Kota Bandung",
+    page_icon="🗺️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS Modern Minimalis
+st.markdown("""
+    <style>
+    [data-testid="stSidebar"] {
+        background-color: #0f172a;
+        color: #f8fafc;
+    }
+    [data-testid="stSidebar"] .stSelectbox label {
+        color: #cbd5e1 !important;
+        font-weight: 500;
+    }
+    .main-title {
+        font-family: 'Inter', sans-serif;
+        color: #1e293b;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin-bottom: 2px;
+    }
+    .sub-title {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 25px;
+    }
+    .card-container {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # ==========================================
 # 2. CACHING DATA (MEMBUAT APLIKASI RINGAN)
 # ==========================================
@@ -67,3 +119,6 @@ def load_and_process_data():
         ])
         
     return batas_kota, df
+
+# Eksekusi fungsi load data terpangkas cache
+batas_kota, df_all = load_and_process_data()
