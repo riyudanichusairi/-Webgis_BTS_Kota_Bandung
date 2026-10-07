@@ -1,6 +1,8 @@
 import streamlit as st
 import folium
 from folium.plugins import MarkerCluster, MeasureControl
+from branca.element import MacroElement
+from jinja2 import Template
 import json
 import pandas as pd
 
@@ -19,10 +21,53 @@ st.markdown("""
     <style>
     [data-testid="stSidebar"] { background-color: #0f172a; color: #f8fafc; }
     [data-testid="stSidebar"] .stSelectbox label { color: #cbd5e1 !important; font-weight: 500; }
+    [data-testid="stSidebar"] .stTextInput label { color: #cbd5e1 !important; font-weight: 500; }
     .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
     .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
     </style>
     """, unsafe_allow_html=True)
+
+# ==========================================
+# CUSTOM CLASS UNTUK SEARCH BAR ALAMAT
+# ==========================================
+class LeafletGeosearch(MacroElement):
+    """Menambahkan Search Bar alamat di pojok kanan atas peta menggunakan Leaflet Geosearch"""
+    def __init__(self):
+        super(LeafletGeosearch, self).__init__()
+        self._template = Template("""
+            {% macro header(this, kwargs) %}
+            <link rel="stylesheet" href="https://unpkg.com" />
+            <script src="https://unpkg.com"></script>
+            <style>
+                .leaflet-top.leaflet-right .leaflet-geosearch-button {
+                    margin-top: 10px !important;
+                    margin-right: 10px !important;
+                }
+            </style>
+            {% endmacro %}
+
+            {% macro script(this, kwargs) %}
+            const provider = new window.GeoSearch.OpenStreetMapProvider();
+            const searchControl = new window.GeoSearch.GeoSearchControl({
+                provider: provider,
+                style: 'bar',
+                position: 'topright',
+                showMarker: true,
+                showPopup: false,
+                marker: {
+                    icon: new L.Icon.Default(),
+                    draggable: false,
+                },
+                maxMarkers: 1,
+                retainZoomLevel: false,
+                animateZoom: true,
+                autoClose: true,
+                searchLabel: 'Cari lokasi/alamat...',
+                keepResult: true
+            });
+            {{this._parent.get_name()}}.addControl(searchControl);
+            {% endmacro %}
+        """)
 
 # ==========================================
 # 2. CACHING DATA (MEMBUAT APLIKASI RINGAN)
@@ -46,7 +91,6 @@ def load_and_process_data():
             if geom and geom.get("type") == "Point":
                 lon, lat = geom["coordinates"]
                 
-                # Validasi dasar koordinat agar tidak merusak JavaScript Leaflet
                 try:
                     lat_val = float(lat)
                     lon_val = float(lon)
@@ -96,9 +140,16 @@ batas_kota, df_all = load_and_process_data()
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
+    # FITUR BARU: Pencarian Berdasarkan ID Menara
+    search_id = st.text_input("Cari ID Menara:", placeholder="Contoh: 1, 2, atau 15...")
+    
+    st.markdown("<hr style='margin:10px 0; border-color:#334155;'>", unsafe_allow_html=True)
+    
+    # Filter 1: Kecamatan
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
     
+    # Filter 2: Kelurahan
     if selected_kec != "Semua Kecamatan":
         df_kec_filtered = df_all[df_all["nama_kecamatan"] == selected_kec]
         list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_kec_filtered["nama_desa_kelurahan"].unique() if x != "-"])
@@ -106,31 +157,50 @@ with st.sidebar:
         list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
     selected_kel = st.selectbox("Wilayah Kelurahan:", list_kel)
     
+    # Filter 3: Pemilik Menara
     list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
     selected_pemilik = st.selectbox("Provider / Pemilik:", list_pemilik)
     
+    # Filter 4: Jenis Struktur
     list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.6 (Fixed Syntax Error)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.6.0 (ID Search Added)</div>", unsafe_allow_html=True)
 
 # ==========================================
-# PROSES PENJARINGAN DATA AKTIF
+# PROSES PENJARINGAN DATA AKTIF (LOGIKA FILTER)
 # ==========================================
 df_filtered = df_all.copy()
+is_single_id_found = False
+map_center = [-6.9175, 107.6191]
+map_zoom = 12
 
-if selected_kec != "Semua Kecamatan": 
-    df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
+# Jika pengguna memasukkan ID Pencarian, prioritas dialihkan ke ID tersebut
+if search_id.strip():
+    df_id_match = df_all[df_all["id"].str.strip() == search_id.strip()]
+    if not df_id_match.empty:
+        df_filtered = df_id_match
+        # Ubah titik tengah peta ke koordinat menara yang dicari
+        map_center = [df_filtered.iloc[0]["lat"], df_filtered.iloc[0]["long"]]
+        map_zoom = 17  # Otomatis zoom close-up ke lokasi menara
+        is_single_id_found = True
+    else:
+        # Jika ID tidak ditemukan, kosongkan data filter agar memicu st.warning
+        df_filtered = pd.DataFrame(columns=df_all.columns)
+else:
+    # Jalankan filter drop-down standar jika kolom pencarian ID kosong
+    if selected_kec != "Semua Kecamatan": 
+        df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
 
-if selected_kel != "Semua Desa/Kelurahan": 
-    df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
+    if selected_kel != "Semua Desa/Kelurahan": 
+        df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
 
-if selected_pemilik != "Semua Pemilik Menara": 
-    df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
+    if selected_pemilik != "Semua Pemilik Menara": 
+        df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
 
-if selected_struktur != "Semua Struktur Tower": 
-    df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
+    if selected_struktur != "Semua Struktur Tower": 
+        df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
 
 # ==========================================
 # 4. KONTEN UTAMA & HEADER DASHBOARD
@@ -141,80 +211,3 @@ st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi D
 m1, m2, m3, m4 = st.columns(4)
 with m1: st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
 with m2: st.metric("Cakupan Kecamatan", f"{df_filtered['nama_kecamatan'].nunique()}")
-with m3: st.metric("Entitas Pemilik", f"{df_filtered['pemilik_menara'].nunique()}")
-with m4: st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique()}")
-
-# ==========================================
-# 5. PETA INTERAKTIF DIGITAL
-# ==========================================
-st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
-
-# Inisialisasi Peta dasar dengan Skala bawaan di kiri bawah
-m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
-
-# Menambahkan fitur pengukur jarak & luas interaktif (Measure Control) di kiri atas
-measure_control = MeasureControl(
-    position='topleft',
-    primary_length_unit='meters',
-    secondary_length_unit='kilometers',
-    primary_area_unit='sqmeters',
-    secondary_area_unit='hectares',
-    line_options={
-        'color': '#1d4ed8',
-        'weight': 5,
-        'opacity': 0.8
-    }
-)
-m.add_child(measure_control)
-
-if batas_kota:
-    folium.GeoJson(
-        data=batas_kota, 
-        name="Batas Administrasi", 
-        style_function=lambda feature: {"fillColor": "#3b82f6", "color": "#2563eb", "weight": 1.5, "fillOpacity": 0.04}
-    ).add_to(m)
-
-if not df_filtered.empty:
-    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
-    
-    for _, row in df_filtered.iterrows():
-        popup_html = f"""
-        <div style="font-family: Arial, sans-serif; font-size:12px; width:220px;">
-            <b>Pemilik:</b> {row['pemilik_menara']}<br>
-            <b>Lokasi:</b> {row['lokasi_menara']}<br>
-            <b>Kecamatan:</b> {row['nama_kecamatan']}<br>
-            <b>Struktur:</b> {row['struktur_tower']}<br>
-            <b>Tinggi:</b> {row['tinggi_tower']} {row['satuan']}
-        </div>
-        """
-        folium.Marker(
-            location=[row['lat'], row['long']],
-            popup=folium.Popup(popup_html, max_width=250),
-            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
-        ).add_to(marker_cluster)
-
-# Render menggunakan HTML kontainer statis demi keamanan JavaScript
-import streamlit.components.v1 as components
-html_map = m._repr_html_()
-components.html(html_map, height=520, scrolling=True)
-
-# ==========================================
-# 6. TABEL DATA TABULAR
-# ==========================================
-st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
-
-if df_filtered.empty:
-    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
-
-if not df_filtered.empty:
-    df_display = df_filtered[[
-        "id", "pemilik_menara", "struktur_tower", "tinggi_tower", "satuan",
-        "nama_kecamatan", "nama_desa_kelurahan", "lokasi_menara", "tahun"
-    ]].copy()
-    
-    # DI SINI PERBAIKANNYA: Tanda kurung siku tutup ']' sekarang dipastikan ada dan valid
-    df_display.columns = [
-        "ID", "Pemilik / Provider", "Jenis Struktur", "Tinggi", "Satuan",
-        "Kecamatan", "Kelurahan", "Alamat Lokasi", "Tahun Berdiri"
-    ]
-    
