@@ -190,3 +190,29 @@ with map_container:
 
 # ==========================================
 # 6. TABEL DATA TABULAR (Sinkron & Dijamin Muncul)
+# ==========================================
+st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
+
+if not df_filtered.empty:
+    # Memilih dan mengurutkan kolom agar informasi utama lebih mudah dibaca pembaca
+    df_display = df_filtered[[
+        "id", "pemilik_menara", "struktur_tower", "tinggi_tower", "satuan",
+        "nama_kecamatan", "nama_desa_kelurahan", "lokasi_menara", 
+        "tahun", "status_izin", "no_izin", "long", "lat"
+    ]].copy()
+    
+    # Mengubah nama kolom display menjadi representatif dan bersih
+    df_display.columns = [
+        "ID", "Pemilik / Provider", "Jenis Struktur", "Tinggi", "Satuan",
+        "Kecamatan", "Kelurahan", "Alamat Lokasi", 
+        "Tahun Berdiri", "Status Izin", "No. Izin / PBG", "Longitude", "Latitude"
+    ]
+    
+    # Menampilkan tabel interaktif yang mendukung sorting, pencarian, dan resize kolom
+    st.dataframe(
+        df_display, 
+        use_container_width=True, 
+        hide_index=True
+    )
+else:
+    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
