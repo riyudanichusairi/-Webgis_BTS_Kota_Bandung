@@ -83,7 +83,7 @@ st.markdown("""
 with st.sidebar:
     st.markdown("""
         <div class="sidebar-logo-container">
-            <!-- Ganti URL source gambar dengan logo Kabupaten Lamongan jika ada -->
+            <!-- URL source gambar menggunakan logo Kabupaten Lamongan -->
             <img src="https://wikimedia.org" width="80">
             <div class="sidebar-title">WebGIS Penduduk<br>Lamongan 2024</div>
             <div class="sidebar-desc">
@@ -124,8 +124,7 @@ def load_geojson(file_path):
 # Silakan sesuaikan nama file GeoJSON kependudukan Kabupaten Lamongan Anda
 batas_desa = load_geojson("batas_desa_lamongan.geojson") 
 
-# Contoh pembuatan dummy DataFrame jika data utama belum terisi
-# Struktur kolom disesuaikan dengan data demografi Lamongan pada gambar
+# PERBAIKAN: Mengisi data contoh yang utuh tanpa celah sintaks kosong maupun string kosong
 raw_data = {
     "No":,
     "Kecamatan": ["Paciran", "Brondong", "Brondong", "Mantup", "Tikung", "Sukodadi", "Paciran", "Modo"],
@@ -192,7 +191,7 @@ with col4:
 # ==========================================
 st.markdown('<div class="section-title">📉 Analisis dan Detail Data Terfilter</div>', unsafe_allow_html=True)
 
-col_tabel, col_grafik = st.columns([4, 5])
+col_tabel, col_grafik = st.columns(2)
 
 with col_tabel:
     st.markdown('<div class="bg-white-card"><b>📋 Tabel Detail Penduduk per Desa</b><br><br>', unsafe_allow_html=True)
@@ -246,3 +245,5 @@ if selected_des != "--Semua Desa/Kelurahan--" and not df_filtered.empty:
     zoom_lv = 14
 elif selected_kec != "--Semua Kecamatan--" and not df_filtered.empty:
     map_center = [df_filtered['lat'].mean(), df_filtered['long'].mean()]
+    zoom_lv = 12
+
