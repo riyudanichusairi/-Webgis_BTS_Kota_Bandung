@@ -18,7 +18,7 @@ st.set_page_config(
 st.markdown("""
     <style>
     [data-testid="stSidebar"] { background-color: #0f172a; color: #f8fafc; }
-    [data-testid="stSidebar"] .stSelectbox label { color: #cbd5e1 !important; font-weight: 500; }
+    [data-testid="stSidebar"] .stSelectbox label, [data-testid="stSidebar"] .stMultiSelect label { color: #cbd5e1 !important; font-weight: 500; }
     .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
     .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
     </style>
@@ -96,6 +96,11 @@ batas_kota, df_all = load_and_process_data()
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
+    # --- FILTER BARU: ID MENARA ---
+    list_id = sorted([x for x in df_all["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
+    selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
+    
+    # Filter Wilayah Kecamatan
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
     
@@ -113,12 +118,16 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.6 (Fixed Syntax Error)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.7 (Added ID Filter)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
 # ==========================================
 df_filtered = df_all.copy()
+
+# Filter berdasarkan ID Menara (jika ada yang dipilih)
+if selected_id:
+    df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
 
 if selected_kec != "Semua Kecamatan": 
     df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
@@ -180,6 +189,7 @@ if not df_filtered.empty:
     for _, row in df_filtered.iterrows():
         popup_html = f"""
         <div style="font-family: Arial, sans-serif; font-size:12px; width:220px;">
+            <b>ID:</b> {row['id']}<br>
             <b>Pemilik:</b> {row['pemilik_menara']}<br>
             <b>Lokasi:</b> {row['lokasi_menara']}<br>
             <b>Kecamatan:</b> {row['nama_kecamatan']}<br>
@@ -206,15 +216,3 @@ st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
 if df_filtered.empty:
     st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
 
-if not df_filtered.empty:
-    df_display = df_filtered[[
-        "id", "pemilik_menara", "struktur_tower", "tinggi_tower", "satuan",
-        "nama_kecamatan", "nama_desa_kelurahan", "lokasi_menara", "tahun"
-    ]].copy()
-    
-    # DI SINI PERBAIKANNYA: Tanda kurung siku tutup ']' sekarang dipastikan ada dan valid
-    df_display.columns = [
-        "ID", "Pemilik / Provider", "Jenis Struktur", "Tinggi", "Satuan",
-        "Kecamatan", "Kelurahan", "Alamat Lokasi", "Tahun Berdiri"
-    ]
-    
