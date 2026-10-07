@@ -99,10 +99,15 @@ def load_and_process_data():
                     "tahun": get_prop(["tahun", "tahun_berdiri", "thn"])
                 })
                 
-    df = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
-        "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
-        "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", "satuan", "tahun"
-    ])
+    if raw_rows:
+        df = pd.DataFrame(raw_rows)
+        # Menghilangkan .0 dengan mengubah tipe data kolom ID menjadi teks/string bersih
+        df["id"] = df["id"].astype(str).str.split('.').str[0]
+    else:
+        df = pd.DataFrame(columns=[
+            "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
+            "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", "satuan", "tahun"
+        ])
     return batas_kota, df
 
 # Eksekusi fungsi load data terpangkas cache
