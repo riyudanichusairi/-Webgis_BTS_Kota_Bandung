@@ -75,12 +75,18 @@ def load_and_process_data():
             if geom and geom.get("type") == "Point":
                 lon, lat = geom["coordinates"]
                 
+                # Fungsi ekstraksi properti yang diperbaiki (Kebal Error Data Kosong & Numerik)
                 def get_prop(keys_list, default="-"):
                     for k in keys_list:
                         for actual_key in props.keys():
                             if actual_key.lower().strip() == k.lower().strip():
                                 val = props[actual_key]
-                                return str(val).strip() if val is not None else default
+                                if val is None:
+                                    return default
+                                # Jika data berupa float bulat (seperti 4.0 atau 3.0), bersihkan jadi teks biasa (4 atau 3)
+                                if isinstance(val, float) and val.is_integer():
+                                    return str(int(val))
+                                return str(val).strip()
                     return default
 
                 raw_rows.append({
@@ -98,8 +104,7 @@ def load_and_process_data():
                     "satuan": get_prop(["satuan", "unit"], "Meter"),
                     "tahun": get_prop(["tahun", "tahun_berdiri", "thn"]),
                     
-                    # --- KOLOM TAMBAHAN BARU ---
-                    # Menangkap field keterangan tambahan jika Anda memasukkannya ke berkas GeoJSON baru
+                    # Kolom keterangan tambahan dari berkas baru Anda
                     "status_izin": get_prop(["status_izin", "status", "izin", "legalitas"], "-"),
                     "no_izin": get_prop(["no_izin", "nomor_sk", "imb", "pbg"], "-")
                 })
@@ -137,7 +142,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.1 (Pembaruan Atribut)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.2 (Bugfix Core Render)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -172,7 +177,7 @@ with m4:
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-# Pembuatan Struktur Basemap Berbasis OpenStreetMap Gratis Tanpa API Key
+# Pembuatan Struktur Basemap Berbasis OpenStreetMap
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap")
 
 # Tambah Batas Administrasi Kota
@@ -206,16 +211,9 @@ if not df_filtered.empty:
                 <tr><td style='vertical-align: top;'><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
                 <tr><td style='vertical-align: top;'><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
                 <tr><td style='vertical-align: top;'><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
-                
-                <!-- INTEGRASI KETERANGAN LENGKAP PADA POPUP PETA -->
                 <tr><td style='vertical-align: top;'><b>Status Izin</b></td><td>: {row['status_izin']}</td></tr>
                 <tr><td style='vertical-align: top;'><b>No. Izin</b></td><td>: {row['no_izin']}</td></tr>
             </table>
         </div>
         """
         folium.Marker(
-            location=[row['lat'], row['long']],
-            popup=folium.Popup(popup_html, max_width=280),
-            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
-        ).add_to(marker_cluster)
-
