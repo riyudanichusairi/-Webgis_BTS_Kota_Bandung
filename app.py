@@ -35,7 +35,7 @@ def load_and_process_data():
             with open(path, "r", encoding="utf-8") as f: return json.load(f)
         except Exception: return None
 
-    # Mengintegrasikan berkas GeoJSON sesuai dengan nama file terbaru di repositori
+    # Integrasi file dengan nama file terbaru di repositori Anda
     batas_kota = read_json("batas_kota_bandung.geojson")
     data_bts = read_json("BTS_kota_bandung.geojson")
     
@@ -91,31 +91,45 @@ batas_kota, df_all = load_and_process_data()
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
+    # Filter 1: Kecamatan
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
     
+    # Filter 2: Kelurahan (Hierarkis bersandar pada Kecamatan terpilih)
     if selected_kec != "Semua Kecamatan":
-        df_filtered_kec = df_all[df_all["nama_kecamatan"] == selected_kec]
-        list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_filtered_kec["nama_desa_kelurahan"].unique() if x != "-"])
+        df_kec_filtered = df_all[df_all["nama_kecamatan"] == selected_kec]
+        list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_kec_filtered["nama_desa_kelurahan"].unique() if x != "-"])
     else:
         list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
     selected_kel = st.selectbox("Wilayah Kelurahan:", list_kel)
     
+    # Filter 3: Pemilik Menara
     list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
     selected_pemilik = st.selectbox("Provider / Pemilik:", list_pemilik)
     
+    # Filter 4: Jenis Struktur
     list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.6 (Updated GeoJSON)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.6 (Full Integrated Release)</div>", unsafe_allow_html=True)
 
-# Proses Penjaringan Data Spasial Aktif
+# ==========================================
+# PROSES PENJARINGAN DATA AKTIF (MENGHUBUNGKAN TABEL & PETA)
+# ==========================================
 df_filtered = df_all.copy()
-if selected_kec != "Semua Kecamatan": df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
-if selected_kel != "Semua Desa/Kelurahan": df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
-if selected_pemilik != "Semua Pemilik Menara": df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
-if selected_struktur != "Semua Struktur Tower": df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
+
+if selected_kec != "Semua Kecamatan": 
+    df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
+
+if selected_kel != "Semua Desa/Kelurahan": 
+    df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
+
+if selected_pemilik != "Semua Pemilik Menara": 
+    df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
+
+if selected_struktur != "Semua Struktur Tower": 
+    df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
 
 # ==========================================
 # 4. KONTEN UTAMA & HEADER DASHBOARD
@@ -162,8 +176,6 @@ if not df_filtered.empty:
 st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
 
 # ==========================================
-# 6. TABEL DATA TABULAR (Struktur Kode Padat & Aman)
+# 6. TABEL DATA TABULAR (Sinkron dengan Filter)
 # ==========================================
 st.markdown("### 📊 Dataset Atribut Menara")
-cfg = {"nama_provinsi": "Provinsi", "nama_kabupaten_kota": "Kabupaten/Kota", "nama_kecamatan": "Kecamatan", "nama_desa_kelurahan": "Kelurahan", "pemilik_menara": "Nama Pemilik", "lokasi_menara": "Lokasi Menara", "long": "Bujur (X)", "lat": "Lintang (Y)", "struktur_tower": "Tipe Menara", "tinggi_tower": "Tinggi", "satuan": "Satuan", "tahun": "Tahun", "status_izin": "Status Izin", "no_izin": "No. IMB / PBG"}
-st.dataframe(df_filtered, use_container_width=True, hide_index=True, column_config=cfg)
