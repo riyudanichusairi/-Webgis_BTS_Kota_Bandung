@@ -99,12 +99,12 @@ def load_and_process_data():
     if raw_rows:
         df = pd.DataFrame(raw_rows)
         
-        # Menggunakan metode replace string yang jauh lebih aman dari risiko SyntaxError
-        df["id"] = df["id"].astype(str).str.replace(".0", "", grandfathered=True, regex=False)
-        df["struktur_tower"] = df["struktur_tower"].astype(str).str.replace(".0", "", grandfathered=True, regex=False)
-        df["tahun"] = df["tahun"].astype(str).str.replace(".0", "", grandfathered=True, regex=False)
+        # Menggunakan regex replace standar untuk menghapus .0 di akhir string angka secara aman
+        df["id"] = df["id"].astype(str).str.replace(r"\.0$", "", regex=True)
+        df["struktur_tower"] = df["struktur_tower"].astype(str).str.replace(r"\.0$", "", regex=True)
+        df["tahun"] = df["tahun"].astype(str).str.replace(r"\.0$", "", regex=True)
         
-        # Membersihkan kolom tinggi menara menjadi teks bulat polos
+        # Konversi kolom tinggi menjadi teks angka bulat utuh tanpa pecahan desimal
         df["tinggi_tower"] = pd.to_numeric(df["tinggi_tower"], errors='coerce').fillna(0).astype(int).astype(str)
     else:
         df = pd.DataFrame(columns=[
@@ -152,7 +152,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur, key=f"strk_{st.session_state.filter_key}")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.3 (Stable Build)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.4 (Stable Hotfix)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
