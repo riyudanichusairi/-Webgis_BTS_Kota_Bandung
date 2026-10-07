@@ -150,8 +150,8 @@ st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi D
 m1, m2, m3, m4 = st.columns(4)
 with m1: st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
 with m2: st.metric("Cakupan Kecamatan", f"{df_filtered['nama_kecamatan'].nunique()}")
-with m3: st.metric("Entitas Pemilik", f"{df_filtered['pemilik_menara'].nunique()}")
-with m4: st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique()}")
+with m3: st.metric("Cakupan Pemilik Menara", f"{df_filtered['pemilik_menara'].nunique()}")
+with m4: st.metric("Cakupan Jenis Struktur Menara", f"{df_filtered['struktur_tower'].nunique()}")
 
 # ==========================================
 # 5. PETA INTERAKTIF DIGITAL
