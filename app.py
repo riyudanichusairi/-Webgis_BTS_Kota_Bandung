@@ -113,7 +113,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.2 (Measure Position Fixed)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.5 (Final Anti-Error)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
@@ -152,9 +152,9 @@ st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 # Inisialisasi Peta dasar dengan Skala bawaan di kiri bawah
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
 
-# MEMINDAHKAN POSISI ALAT UKUR KE KIRI ATAS (position='topleft')
+# Menambahkan fitur pengukur jarak & luas interaktif (Measure Control) di kiri atas
 measure_control = MeasureControl(
-    position='topleft',  # <-- Mengubah posisi dari 'topright' menjadi 'topleft'
+    position='topleft',
     primary_length_unit='meters',
     secondary_length_unit='kilometers',
     primary_area_unit='sqmeters',
@@ -199,9 +199,13 @@ html_map = m._repr_html_()
 components.html(html_map, height=520, scrolling=True)
 
 # ==========================================
-# 6. TABEL DATA TABULAR
+# 6. TABEL DATA TABULAR (Struktur Tanpa Else Cabang - Antiputus)
 # ==========================================
 st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
+
+# Menggunakan pengondisian tunggal yang bersih untuk menghindari kesalahan indentasi compiler
+if df_filtered.empty:
+    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
 
 if not df_filtered.empty:
     df_display = df_filtered[[
@@ -211,12 +215,3 @@ if not df_filtered.empty:
     
     df_display.columns = [
         "ID", "Pemilik / Provider", "Jenis Struktur", "Tinggi", "Satuan",
-        "Kecamatan", "Kelurahan", "Alamat Lokasi", "Tahun Berdiri"
-    ]
-    
-    st.dataframe(
-        df_display, 
-        use_container_width=True, 
-        hide_index=True
-    )
-else:
