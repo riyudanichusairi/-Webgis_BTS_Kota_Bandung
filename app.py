@@ -4,6 +4,7 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 import json
 import pandas as pd
+import plotly.express as px
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN & THEME GLOBAL
@@ -15,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Modern Minialis
+# Custom CSS Modern Minimalis
 st.markdown("""
     <style>
     [data-testid="stSidebar"] {
@@ -112,8 +113,9 @@ batas_kota, df_all = load_and_process_data()
 # 3. CONTROL PANEL (SIDEBAR FILTER)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:10px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
+    # Filter Wilayah & Atribut
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
     
@@ -131,7 +133,17 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.0 (Optimized Version)</div>", unsafe_allow_html=True)
+    # FITUR 1: Pengaturan Basemap Dinamis
+    st.markdown("<h4 style='color:#f8fafc; font-size:14px; font-weight:600; margin-bottom:5px;'>🗺️ Tampilan Peta</h4>", unsafe_allow_html=True)
+    basemap_options = {
+        "OpenStreetMap (Standar)": "openstreetmap",
+        "CartoDB Positron (Terang)": "cartodbpositron",
+        "CartoDB Dark Matter (Gelap)": "cartodbdarkmatter"
+    }
+    selected_basemap = st.selectbox("Pilih Peta Dasar:", list(basemap_options.keys()))
+    
+    st.markdown("---")
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.0 (Features Upgraded)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -166,8 +178,8 @@ with m4:
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-# Pembuatan Struktur Basemap Berbasis OpenStreetMap Gratis Tanpa API Key
-m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap")
+# Pembuatan Struktur Basemap Berbasis Pilihan Pengguna di Sidebar
+m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles=basemap_options[selected_basemap])
 
 # Tambah Batas Administrasi Kota
 if batas_kota:
@@ -182,7 +194,19 @@ if batas_kota:
         }
     ).add_to(m)
 
-# Plotting Cluster Titik Infrastruktur BTS
+# FITUR 2: Fungsi Pewarnaan Dinamis Berdasarkan Tipe Struktur Tower
+def get_marker_color(struktur):
+    str_lower = str(struktur).lower()
+    if "monopole" in str_lower:
+        return "green"
+    elif "sst" in str_lower or "3 leg" in str_lower or "4 leg" in str_lower:
+        return "red"
+    elif "pole" in str_lower or "microcell" in str_lower:
+        return "orange"
+    else:
+        return "blue"
+
+# FITUR 5: Proteksi data kosong (Defensive Coding)
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
@@ -202,30 +226,7 @@ if not df_filtered.empty:
             </table>
         </div>
         """
+        # Menerapkan pewarnaan dinamis pada marker
         folium.Marker(
             location=[row['lat'], row['long']],
             popup=folium.Popup(popup_html, max_width=280),
-            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
-        ).add_to(marker_cluster)
-
-# Tampilkan Peta ke Streamlit dengan Penyetelan Tanpa Reload Aksi Objek Balikan
-st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
-
-# ==========================================
-# 6. TABEL DATA TABULAR & VALIDASI OUTPUT
-# ==========================================
-st.markdown("### 📊 Dataset Atribut Menara")
-st.dataframe(
-    df_filtered, 
-    use_container_width=True, 
-    hide_index=True,
-    column_config={
-        "pemilik_menara": "Nama Pemilik",
-        "nama_kecamatan": "Kecamatan",
-        "nama_desa_kelurahan": "Kelurahan",
-        "struktur_tower": "Tipe Menara",
-        "tinggi_tower": "Tinggi",
-        "long": "Bujur (X)",
-        "lat": "Lintang (Y)"
-    }
-)
