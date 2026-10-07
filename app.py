@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Modern Minialis
+# Custom CSS Modern Minimalis & Optimalisasi Layout Chart
 st.markdown("""
     <style>
     [data-testid="stSidebar"] {
@@ -47,6 +47,12 @@ st.markdown("""
         border: 1px solid #e2e8f0;
         margin-bottom: 20px;
     }
+    div[data-testid="stMetric"] {
+        background-color: #f8fafc;
+        padding: 10px 15px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -55,7 +61,6 @@ st.markdown("""
 # ==========================================
 @st.cache_data(show_spinner="Memuat data spasial...")
 def load_and_process_data():
-    # Fungsi pembacaan GeoJSON aman
     def read_json(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -105,33 +110,57 @@ def load_and_process_data():
     ])
     return batas_kota, df
 
-# Eksekusi fungsi load data terpangkas cache
+# Eksekusi fungsi load data
 batas_kota, df_all = load_and_process_data()
+
+# Initialize session state untuk kemudahan reset filter
+if 'reset_trigger' not in st.session_state:
+    st.session_state.reset_trigger = False
+
+def reset_filters():
+    st.session_state.reset_trigger = True
 
 # ==========================================
 # 3. CONTROL PANEL (SIDEBAR FILTER)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:10px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
+    # Tombol Reset Filter Utama
+    st.button("🔄 Reset Semua Filter", on_click=reset_filters, use_container_width=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Reset mekanisme index jika tombol ditekan
+    if st.session_state.reset_trigger:
+        idx_kec = 0
+        idx_kel = 0
+        idx_pmlk = 0
+        idx_strk = 0
+        st.session_state.reset_trigger = False # Matikan trigger setelah reset
+    else:
+        idx_kec = 0
+        idx_kel = 0
+        idx_pmlk = 0
+        idx_strk = 0
+
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
-    selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
+    selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec, index=idx_kec)
     
     if selected_kec != "Semua Kecamatan":
         df_filtered_kec = df_all[df_all["nama_kecamatan"] == selected_kec]
         list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_filtered_kec["nama_desa_kelurahan"].unique() if x != "-"])
     else:
         list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
-    selected_kel = st.selectbox("Wilayah Kelurahan:", list_kel)
+    selected_kel = st.selectbox("Wilayah Kelurahan:", list_kel, index=idx_kel)
     
     list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
-    selected_pemilik = st.selectbox("Provider / Pemilik:", list_pemilik)
+    selected_pemilik = st.selectbox("Provider / Pemilik:", list_pemilik, index=idx_pmlk)
     
     list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
-    selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
+    selected_struktur = st.selectbox("Jenis Struktur:", list_struktur, index=idx_strk)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.0 (Optimized Version)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.0 (User-Friendly Version)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -208,24 +237,4 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# Tampilkan Peta ke Streamlit dengan Penyetelan Tanpa Reload Aksi Objek Balikan
-st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
-
-# ==========================================
-# 6. TABEL DATA TABULAR & VALIDASI OUTPUT
-# ==========================================
-st.markdown("### 📊 Dataset Atribut Menara")
-st.dataframe(
-    df_filtered, 
-    use_container_width=True, 
-    hide_index=True,
-    column_config={
-        "pemilik_menara": "Nama Pemilik",
-        "nama_kecamatan": "Kecamatan",
-        "nama_desa_kelurahan": "Kelurahan",
-        "struktur_tower": "Tipe Menara",
-        "tinggi_tower": "Tinggi",
-        "long": "Bujur (X)",
-        "lat": "Lintang (Y)"
-    }
-)
+# Tampilkan Peta ke Streamlit
