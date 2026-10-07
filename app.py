@@ -91,55 +91,62 @@ def load_and_process_data():
 batas_kota, df_all = load_and_process_data()
 
 # ==========================================
-# 3. CONTROL PANEL (SIDEBAR FILTER)
+# 3. CONTROL PANEL (SIDEBAR FILTER MULTISELECT)
 # ==========================================
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    # --- FILTER BARU: ID MENARA ---
+    # Filter ID Menara
     list_id = sorted([x for x in df_all["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
     selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
     
-    # Filter Wilayah Kecamatan
-    list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
-    selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
+    # Filter Wilayah Kecamatan (Menggunakan Multiselect)
+    list_kec = sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
+    selected_kec = st.multiselect("Wilayah Kecamatan:", list_kec, placeholder="Pilih atau ketik Kecamatan...")
     
-    if selected_kec != "Semua Kecamatan":
-        df_kec_filtered = df_all[df_all["nama_kecamatan"] == selected_kec]
-        list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_kec_filtered["nama_desa_kelurahan"].unique() if x != "-"])
+    # Filter Wilayah Kelurahan (Menggunakan Multiselect & dinamis mengikuti kecamatan terpilih)
+    if selected_kec:
+        df_kec_filtered = df_all[df_all["nama_kecamatan"].isin(selected_kec)]
+        list_kel = sorted([x for x in df_kec_filtered["nama_desa_kelurahan"].unique() if x != "-"])
     else:
-        list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
-    selected_kel = st.selectbox("Wilayah Kelurahan:", list_kel)
+        list_kel = sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
+    selected_kel = st.multiselect("Wilayah Kelurahan:", list_kel, placeholder="Pilih atau ketik Kelurahan...")
     
-    list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
-    selected_pemilik = st.selectbox("Provider / Pemilik:", list_pemilik)
+    # Filter Provider / Pemilik Menara (Menggunakan Multiselect)
+    list_pemilik = sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
+    selected_pemilik = st.multiselect("Provider / Pemilik:", list_pemilik, placeholder="Pilih atau ketik Provider...")
     
-    list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
-    selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
+    # Filter Jenis Struktur (Menggunakan Multiselect)
+    list_struktur = sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
+    selected_struktur = st.multiselect("Jenis Struktur:", list_struktur, placeholder="Pilih atau ketik Jenis Struktur...")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.7 (Added ID Filter)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.5.0 (All Multiselect Mode)</div>", unsafe_allow_html=True)
 
 # ==========================================
-# PROSES PENJARINGAN DATA AKTIF
+# PROSES PENJARINGAN DATA AKTIF (.isin)
 # ==========================================
 df_filtered = df_all.copy()
 
-# Filter berdasarkan ID Menara (jika ada yang dipilih)
+# Menyaring berdasarkan ID Menara
 if selected_id:
     df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
 
-if selected_kec != "Semua Kecamatan": 
-    df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
+# Menyaring berdasarkan Kecamatan
+if selected_kec: 
+    df_filtered = df_filtered[df_filtered["nama_kecamatan"].isin(selected_kec)]
 
-if selected_kel != "Semua Desa/Kelurahan": 
-    df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
+# Menyaring berdasarkan Kelurahan
+if selected_kel: 
+    df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"].isin(selected_kel)]
 
-if selected_pemilik != "Semua Pemilik Menara": 
-    df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
+# Menyaring berdasarkan Provider / Pemilik Menara
+if selected_pemilik: 
+    df_filtered = df_filtered[df_filtered["pemilik_menara"].isin(selected_pemilik)]
 
-if selected_struktur != "Semua Struktur Tower": 
-    df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
+# Menyaring berdasarkan Jenis Struktur Tower
+if selected_struktur: 
+    df_filtered = df_filtered[df_filtered["struktur_tower"].isin(selected_struktur)]
 
 # ==========================================
 # 4. KONTEN UTAMA & HEADER DASHBOARD
@@ -206,13 +213,3 @@ if not df_filtered.empty:
 # Render menggunakan HTML kontainer statis demi keamanan JavaScript
 import streamlit.components.v1 as components
 html_map = m._repr_html_()
-components.html(html_map, height=520, scrolling=True)
-
-# ==========================================
-# 6. TABEL DATA TABULAR
-# ==========================================
-st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
-
-if df_filtered.empty:
-    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
-
