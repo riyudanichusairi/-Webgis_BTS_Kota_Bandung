@@ -106,9 +106,8 @@ def load_and_process_data():
 batas_kota, df_all = load_and_process_data()
 
 # ==========================================
-# 3. MEKANISME RESET FILTER AMAN (SESSION STATE)
+# 3. MEKANISME RESET FILTER AMAN
 # ==========================================
-# Membuat key unik di session state untuk memaksa widget selectbox melakukan re-render saat di-reset
 if "filter_key" not in st.session_state:
     st.session_state.filter_key = 0
 
@@ -121,14 +120,11 @@ def memicu_reset():
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:10px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    # Tombol Reset Filter Utama menggunakan callback fungsi memicu_reset
-    st.button("🔄 Reset Semua Filter", on_click=micu_reset, use_container_width=True)
+    # Memperbaiki tombol on_click agar memanggil fungsi 'memicu_reset' dengan benar
+    st.button("🔄 Reset Semua Filter", on_click=memicu_reset, use_container_width=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Ambil daftar opsi filter unik
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
-    
-    # Pemasangan key dinamis berbasis nomor acuan filter_key
     selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec, key=f"kec_{st.session_state.filter_key}")
     
     if selected_kec != "Semua Kecamatan":
@@ -146,7 +142,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur, key=f"strk_{st.session_state.filter_key}")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.1 (Fixed Layout Version)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.2 (Stable Release)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -228,3 +224,10 @@ st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[
 
 # ==========================================
 # 7. ANALISIS GRAFIK STATISTIK
+# ==========================================
+st.markdown("### 📈 Ringkasan Grafik Analitik")
+c1, c2 = st.columns(2)
+
+with c1:
+    st.write("**Top 10 Pemilik Menara Terbanyak**")
+    if not df_filtered.empty:
