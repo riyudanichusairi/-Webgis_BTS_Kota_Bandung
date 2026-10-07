@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Modern Minialis
+# Custom CSS Modern Minimalis & Sidebar Styling
 st.markdown("""
     <style>
     [data-testid="stSidebar"] {
@@ -39,14 +39,6 @@ st.markdown("""
         font-size: 14px;
         margin-bottom: 25px;
     }
-    .card-container {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        border: 1px solid #e2e8f0;
-        margin-bottom: 20px;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -55,7 +47,6 @@ st.markdown("""
 # ==========================================
 @st.cache_data(show_spinner="Memuat data spasial...")
 def load_and_process_data():
-    # Fungsi pembacaan GeoJSON aman
     def read_json(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -105,7 +96,7 @@ def load_and_process_data():
     ])
     return batas_kota, df
 
-# Eksekusi fungsi load data terpangkas cache
+# Eksekusi fungsi load data dengan cache agar web responsif
 batas_kota, df_all = load_and_process_data()
 
 # ==========================================
@@ -114,6 +105,15 @@ batas_kota, df_all = load_and_process_data()
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
+    # Filter Peta Dinamis (Google Maps vs Google Satellite)
+    tipe_peta = st.selectbox(
+        "Tampilan Peta (Basemap):",
+        ["Google Maps Standar", "Google Satellite", "Google Hybrid"]
+    )
+    
+    st.markdown("---")
+    
+    # Filter Atribut Menara BTS
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
     
@@ -131,7 +131,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.0 (Optimized Version)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.0 (Google Maps Update)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -150,7 +150,7 @@ if selected_struktur != "Semua Struktur Tower":
 st.markdown("<div class='main-title'>Geographic Information System Menara BTS</div>", unsafe_allow_html=True)
 st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi Digital Kota Bandung</div>", unsafe_allow_html=True)
 
-# Ringkasan Statistik Utama Komponen Metric
+# Statistik Ringkas Berbasis st.metric
 m1, m2, m3, m4 = st.columns(4)
 with m1:
     st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
@@ -162,14 +162,27 @@ with m4:
     st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique()}")
 
 # ==========================================
-# 5. PETA INTERAKTIF DIGITAL
+# 5. PETA INTERAKTIF GOOGLE MAPS
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-# Pembuatan Struktur Basemap
-m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="cartodbpositron")
+# Pemetaan URL Tile Server Google Maps berdasarkan pilihan di Sidebar
+map_dict = {
+    "Google Maps Standar": "http://google.com{x}&y={y}&z={z}",
+    "Google Satellite": "http://google.com{x}&y={y}&z={z}",
+    "Google Hybrid": "http://google.com{x}&y={y}&z={z}"
+}
+google_tiles = map_dict[tipe_peta]
 
-# Tambah Batas Administrasi Kota
+# Pembuatan Struktur Basemap Google Maps
+m = folium.Map(
+    location=[-6.9175, 107.6191], 
+    zoom_start=12, 
+    tiles=google_tiles, 
+    attr="© Google Maps"
+)
+
+# Menampilkan Lapisan Batas Administrasi Kota (GeoJSON) jika tersedia
 if batas_kota:
     folium.GeoJson(
         data=batas_kota,
@@ -177,12 +190,12 @@ if batas_kota:
         style_function=lambda feature: {
             "fillColor": "#3b82f6",
             "color": "#2563eb",
-            "weight": 1.5,
-            "fillOpacity": 0.04,
+            "weight": 2,
+            "fillOpacity": 0.05,
         }
     ).add_to(m)
 
-# Plotting Cluster Titik Infrastruktur BTS
+# Plotting Cluster Titik Infrastruktur BTS dengan Penanda Modern
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
@@ -193,39 +206,28 @@ if not df_filtered.empty:
         <div style='font-family: "Segoe UI", Arial; font-size:12px; width:240px; color:#334155;'>
             <h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS</h4>
             <table style='width:100%; border-collapse: collapse;'>
-                <tr><td><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>
-                <tr><td><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>
-                <tr><td><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>
-                <tr><td><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
-                <tr><td><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
-                <tr><td><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
+                <tr><td style='padding:2px 0;'><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>
+                <tr><td style='padding:2px 0;'><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>
+                <tr><td style='padding:2px 0;'><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>
+                <tr><td style='padding:2px 0;'><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
+                <tr><td style='padding:2px 0;'><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
+                <tr><td style='padding:2px 0;'><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
             </table>
         </div>
         """
         folium.Marker(
             location=[row['lat'], row['long']],
             popup=folium.Popup(popup_html, max_width=280),
-            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
+            icon=folium.Icon(color="red", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# Tampilkan Peta ke Streamlit dengan Penyetelan Tanpa Reload Aksi Objek Balikan
-st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
+# Merender Peta ke Streamlit tanpa memicu perulangan komputasi berlebih (returned_objects=[])
+st_folium(m, width="100%", height=530, key="webgis_map_prod", returned_objects=[])
 
 # ==========================================
-# 6. TABEL DATA TABULAR & VALIDASI OUTPUT
+# 6. TABEL DATA TABULAR ATRIBUT MENARA
 # ==========================================
 st.markdown("### 📊 Dataset Atribut Menara")
 st.dataframe(
     df_filtered, 
     use_container_width=True, 
-    hide_index=True,
-    column_config={
-        "pemilik_menara": "Nama Pemilik",
-        "nama_kecamatan": "Kecamatan",
-        "nama_desa_kelurahan": "Kelurahan",
-        "struktur_tower": "Tipe Menara",
-        "tinggi_tower": "Tinggi",
-        "long": "Bujur (X)",
-        "lat": "Lintang (Y)"
-    }
-)
