@@ -166,8 +166,8 @@ with m4:
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-# Pembuatan Struktur Basemap
-m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="cartodbpositron")
+# Pembuatan Struktur Basemap Berbasis OpenStreetMap Gratis Tanpa API Key
+m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap")
 
 # Tambah Batas Administrasi Kota
 if batas_kota:
