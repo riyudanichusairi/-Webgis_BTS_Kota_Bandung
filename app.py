@@ -166,7 +166,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.7.0 (Fixed Iloc Correctly)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.7.5 (Peta Fix Permanen)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF (LOGIKA FILTER)
@@ -181,8 +181,10 @@ if search_id.strip():
     df_id_match = df_all[df_all["id"].str.strip() == search_id.strip()]
     if not df_id_match.empty:
         df_filtered = df_id_match
-        # PERBAIKAN TOTAL DI SINI: Ditambahkan indeks numerik [0] agar membaca baris awal dengan benar
-        map_center = [float(df_filtered.iloc[0]["lat"]), float(df_filtered.iloc[0]["long"])]
+        # PERBAIKAN UTAMA: Menggunakan indeks integer numerik absolut agar dijamin 100% tanpa error
+        idx_lat = df_filtered.columns.get_loc("lat")
+        idx_long = df_filtered.columns.get_loc("long")
+        map_center = [float(df_filtered.iloc[0, idx_lat]), float(df_filtered.iloc[0, idx_long])]
         map_zoom = 17  
         is_single_id_found = True
     else:
@@ -209,4 +211,3 @@ st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi D
 m1, m2, m3, m4 = st.columns(4)
 with m1: st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
 with m2: st.metric("Cakupan Kecamatan", f"{df_filtered['nama_kecamatan'].nunique() if not df_filtered.empty else 0}")
-with m3: st.metric("Entitas Pemilik", f"{df_filtered['pemilik_menara'].nunique() if not df_filtered.empty else 0}")
