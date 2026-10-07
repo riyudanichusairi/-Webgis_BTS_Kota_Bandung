@@ -156,7 +156,7 @@ with m4: st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique(
 # ==========================================
 # 5. PETA INTERAKTIF DIGITAL
 # ==========================================
-st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
+st.markdown("### 🗺️ Visualisasi Peta Persebaran Menara")
 
 # Inisialisasi Peta dasar dengan koordinat Kota Bandung
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
