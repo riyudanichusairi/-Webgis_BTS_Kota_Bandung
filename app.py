@@ -194,21 +194,19 @@ with map_container:
 st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
 
 if not df_filtered.empty:
-    # Memilih dan mengurutkan kolom agar informasi utama lebih mudah dibaca pembaca
+    # Memilih kolom yang diperlukan saja (menghapus status izin, no izin, long, dan lat)
     df_display = df_filtered[[
         "id", "pemilik_menara", "struktur_tower", "tinggi_tower", "satuan",
-        "nama_kecamatan", "nama_desa_kelurahan", "lokasi_menara", 
-        "tahun", "status_izin", "no_izin", "long", "lat"
+        "nama_kecamatan", "nama_desa_kelurahan", "lokasi_menara", "tahun"
     ]].copy()
     
-    # Mengubah nama kolom display menjadi representatif dan bersih
+    # Mengubah nama kolom display menjadi lebih rapi dan bersih
     df_display.columns = [
         "ID", "Pemilik / Provider", "Jenis Struktur", "Tinggi", "Satuan",
-        "Kecamatan", "Kelurahan", "Alamat Lokasi", 
-        "Tahun Berdiri"
+        "Kecamatan", "Kelurahan", "Alamat Lokasi", "Tahun Berdiri"
     ]
     
-    # Menampilkan tabel interaktif yang mendukung sorting, pencarian, dan resize kolom
+    # Menampilkan tabel interaktif di bawah peta
     st.dataframe(
         df_display, 
         use_container_width=True, 
@@ -216,3 +214,4 @@ if not df_filtered.empty:
     )
 else:
     st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
+
