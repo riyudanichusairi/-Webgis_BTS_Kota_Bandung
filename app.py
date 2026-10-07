@@ -22,8 +22,6 @@ st.markdown("""
     [data-testid="stSidebar"] .stSelectbox label { color: #cbd5e1 !important; font-weight: 500; }
     .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
     .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
-    /* Menghilangkan margin berlebih pada komponen peta */
-    .element-container iframe { max-width: 100% !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -37,7 +35,7 @@ def load_and_process_data():
             with open(path, "r", encoding="utf-8") as f: return json.load(f)
         except Exception: return None
 
-    # Integrasi file dengan nama file terbaru di repositori Anda
+    # Integrasi berkas sesuai dengan repositori GitHub Anda
     batas_kota = read_json("batas_kota_bandung.geojson")
     data_bts = read_json("BTS_kota_bandung.geojson")
     
@@ -114,7 +112,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.7 (Table Bug Fixes)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.8 (Indentation Fixed)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
@@ -146,20 +144,25 @@ with m3: st.metric("Entitas Pemilik", f"{df_filtered['pemilik_menara'].nunique()
 with m4: st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique()}")
 
 # ==========================================
-# 5. INTEGRASI DENGAN SISTEM TAB (SOLUSI TABRAKAN RENDERING)
+# 5. PETA INTERAKTIF DIGITAL (Menggunakan Isolasi Kontainer)
 # ==========================================
-# Memisahkan Peta dan Tabel ke dalam Tab agar performa rendering stabil dan tabel tidak hilang
-tab1, tab2 = st.tabs(["🗺️ Peta Spasial Interaktif", "📊 Dataset Atribut Menara"])
+st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-with tab1:
+# Wadah Peta terisolasi agar render Peta tidak mengganggu komponen di bawahnya
+map_container = st.container()
+with map_container:
     m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap")
 
     if batas_kota:
-        folium.GeoJson(data=batas_kota, name="Batas Administrasi", style_function=lambda feature: {"fillColor": "#3b82f6", "color": "#2563eb", "weight": 1.5, "fillOpacity": 0.04}).add_to(m)
+        folium.GeoJson(
+            data=batas_kota, 
+            name="Batas Administrasi", 
+            style_function=lambda feature: {"fillColor": "#3b82f6", "color": "#2563eb", "weight": 1.5, "fillOpacity": 0.04}
+        ).add_to(m)
 
     if not df_filtered.empty:
         marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
-        for idx, row in df_filtered.iterrows():
+        for _, row in df_filtered.iterrows():
             popup_html = f"""
             <div style='font-family: "Segoe UI", Arial; font-size:12px; width:250px; color:#334155;'>
                 <h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS</h4>
@@ -182,6 +185,8 @@ with tab1:
                 icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
             ).add_to(marker_cluster)
 
-    st_folium(m, width="100%", height=550, key="webgis_map_prod", returned_objects=[])
+    # Key dinamis pada st_folium untuk mencegah pembekuan render komponen lain
+    st_folium(m, width="100%", height=520, key=f"webgis_map_len_{len(df_filtered)}", returned_objects=[])
 
-with tab2:
+# ==========================================
+# 6. TABEL DATA TABULAR (Sinkron & Dijamin Muncul)
