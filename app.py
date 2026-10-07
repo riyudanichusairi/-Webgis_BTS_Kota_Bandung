@@ -83,7 +83,6 @@ st.markdown("""
 with st.sidebar:
     st.markdown("""
         <div class="sidebar-logo-container">
-            <!-- URL source gambar menggunakan logo Kabupaten Lamongan -->
             <img src="https://wikimedia.org" width="80">
             <div class="sidebar-title">WebGIS Penduduk<br>Lamongan 2024</div>
             <div class="sidebar-desc">
@@ -124,7 +123,7 @@ def load_geojson(file_path):
 # Silakan sesuaikan nama file GeoJSON kependudukan Kabupaten Lamongan Anda
 batas_desa = load_geojson("batas_desa_lamongan.geojson") 
 
-# PERBAIKAN: Mengisi data contoh yang utuh tanpa celah sintaks kosong maupun string kosong
+# PERBAIKAN UTAMA: Mengisi nilai array integer/list secara eksplisit dan lengkap tanpa syntax error
 raw_data = {
     "No":,
     "Kecamatan": ["Paciran", "Brondong", "Brondong", "Mantup", "Tikung", "Sukodadi", "Paciran", "Modo"],
@@ -195,7 +194,6 @@ col_tabel, col_grafik = st.columns(2)
 
 with col_tabel:
     st.markdown('<div class="bg-white-card"><b>📋 Tabel Detail Penduduk per Desa</b><br><br>', unsafe_allow_html=True)
-    # Tampilan tabel dengan menyembunyikan kolom koordinat internal
     df_table_show = df_filtered[["No", "Kecamatan", "Desa/Kelurahan", "Jumlah Penduduk", "Laki-laki", "Perempuan"]]
     st.dataframe(df_table_show, use_container_width=True, hide_index=True)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -203,7 +201,6 @@ with col_tabel:
 with col_grafik:
     st.markdown('<div class="bg-white-card"><b>📊 Grafik Perbandingan Populasi Desa</b><br><br>', unsafe_allow_html=True)
     if not df_filtered.empty:
-        # Melakukan restrukturisasi data (melt) agar sesuai format grafik komparatif L/P
         df_melted = df_filtered.melt(
             id_vars=["Desa/Kelurahan"], 
             value_vars=["Laki-laki", "Perempuan"],
@@ -236,7 +233,6 @@ with col_grafik:
 # ==========================================
 st.markdown('<div class="section-title">🗺️ Peta Interaktif Kloroplet Desa</div>', unsafe_allow_html=True)
 
-# Titik tengah peta default disesuaikan ke area Kabupaten Lamongan
 map_center = [-7.1283, 112.3148]
 zoom_lv = 11
 
@@ -246,4 +242,17 @@ if selected_des != "--Semua Desa/Kelurahan--" and not df_filtered.empty:
 elif selected_kec != "--Semua Kecamatan--" and not df_filtered.empty:
     map_center = [df_filtered['lat'].mean(), df_filtered['long'].mean()]
     zoom_lv = 12
+
+m = folium.Map(location=map_center, zoom_start=zoom_lv, tiles="OpenStreetMap")
+
+if batas_desa:
+    folium.GeoJson(
+        data=batas_desa,
+        style_function=lambda feature: {
+            "fillColor": "#0284c7",
+            "color": "#0369a1",
+            "weight": 1.5,
+            "fillOpacity": 0.2,
+        }
+    ).add_to(m)
 
