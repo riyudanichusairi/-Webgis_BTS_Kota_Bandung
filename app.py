@@ -40,14 +40,6 @@ st.markdown("""
         font-size: 14px;
         margin-bottom: 25px;
     }
-    .card-container {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        border: 1px solid #e2e8f0;
-        margin-bottom: 20px;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -139,7 +131,7 @@ with st.sidebar:
     selected_basemap = st.selectbox("Pilih Peta Dasar:", list(basemap_options.keys()))
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.3 (Prod Baseline)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.0 (Linear Stable)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -198,11 +190,12 @@ def get_marker_color(struktur):
     else:
         return "blue"
 
-# Bagian Blok Peta dengan Indentasi yang Dipastikan Aman
-if not df_filtered.empty:
-    marker_cluster = MarkerCluster(
-        options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
-    ).add_to(m)
+# HENTIKAN APABILA DATA KOSONG LEBIH AWAL AGAR TIDAK PERLU PROSES TABS/INDENTASI BERSARANG
+if df_filtered.empty:
+    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter Anda saat ini.")
+else:
+    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
+    
     for _, row in df_filtered.iterrows():
         popup_html = f"""
         <div style='font-family: "Segoe UI", Arial; font-size:12px; width:240px; color:#334155;'>
@@ -222,11 +215,15 @@ if not df_filtered.empty:
             popup=folium.Popup(popup_html, max_width=280),
             icon=folium.Icon(color=get_marker_color(row['struktur_tower']), icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
+        
     st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
-else:
-    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter Anda saat ini.")
 
 # ==========================================
 # 6. VISUALISASI GRAFIK ANALISIS
 # ==========================================
 if not df_filtered.empty:
+    st.markdown("### 📊 Analisis & Statistik Infrastruktur")
+    c1, c2 = st.columns(2)
+    
+    with c1:
+        top_pemilik = df_filtered['pemilik_menara'].value_counts().reset_index(name='Jumlah').head(5)
