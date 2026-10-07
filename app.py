@@ -18,35 +18,10 @@ st.set_page_config(
 # Custom CSS Modern Minimalis
 st.markdown("""
     <style>
-    [data-testid="stSidebar"] {
-        background-color: #0f172a;
-        color: #f8fafc;
-    }
-    [data-testid="stSidebar"] .stSelectbox label {
-        color: #cbd5e1 !important;
-        font-weight: 500;
-    }
-    .main-title {
-        font-family: 'Inter', sans-serif;
-        color: #1e293b;
-        font-size: 28px;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-        margin-bottom: 2px;
-    }
-    .sub-title {
-        color: #64748b;
-        font-size: 14px;
-        margin-bottom: 25px;
-    }
-    .card-container {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        border: 1px solid #e2e8f0;
-        margin-bottom: 20px;
-    }
+    [data-testid="stSidebar"] { background-color: #0f172a; color: #f8fafc; }
+    [data-testid="stSidebar"] .stSelectbox label { color: #cbd5e1 !important; font-weight: 500; }
+    .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
+    .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -57,10 +32,8 @@ st.markdown("""
 def load_and_process_data():
     def read_json(path):
         try:
-            with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return None
+            with open(path, "r", encoding="utf-8") as f: return json.load(f)
+        except Exception: return None
 
     batas_kota = read_json("batas_kota_bandung.geojson")
     data_bts = read_json("BTS_kota_bandung.geojson")
@@ -79,10 +52,8 @@ def load_and_process_data():
                         for actual_key in props.keys():
                             if actual_key.lower().strip() == k.lower().strip():
                                 val = props[actual_key]
-                                if val is None:
-                                    return default
-                                if isinstance(val, float) and val.is_integer():
-                                    return str(int(val))
+                                if val is None: return default
+                                if isinstance(val, float) and val.is_integer(): return str(int(val))
                                 return str(val).strip()
                     return default
 
@@ -136,18 +107,14 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.4 (Strict Syntax Fix)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.5 (Final Table Hotfix)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
-if selected_kec != "Semua Kecamatan":
-    df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
-if selected_kel != "Semua Desa/Kelurahan":
-    df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
-if selected_pemilik != "Semua Pemilik Menara":
-    df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
-if selected_struktur != "Semua Struktur Tower":
-    df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
+if selected_kec != "Semua Kecamatan": df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
+if selected_kel != "Semua Desa/Kelurahan": df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
+if selected_pemilik != "Semua Pemilik Menara": df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
+if selected_struktur != "Semua Struktur Tower": df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
 
 # ==========================================
 # 4. KONTEN UTAMA & HEADER DASHBOARD
@@ -156,37 +123,22 @@ st.markdown("<div class='main-title'>Geographic Information System Menara BTS</d
 st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi Digital Kota Bandung</div>", unsafe_allow_html=True)
 
 m1, m2, m3, m4 = st.columns(4)
-with m1:
-    st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
-with m2:
-    st.metric("Cakupan Kecamatan", f"{df_filtered['nama_kecamatan'].nunique()}")
-with m3:
-    st.metric("Entitas Pemilik", f"{df_filtered['pemilik_menara'].nunique()}")
-with m4:
-    st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique()}")
+with m1: st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
+with m2: st.metric("Cakupan Kecamatan", f"{df_filtered['nama_kecamatan'].nunique()}")
+with m3: st.metric("Entitas Pemilik", f"{df_filtered['pemilik_menara'].nunique()}")
+with m4: st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique()}")
 
 # ==========================================
 # 5. PETA INTERAKTIF DIGITAL
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
-
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap")
 
 if batas_kota:
-    folium.GeoJson(
-        data=batas_kota,
-        name="Batas Administrasi",
-        style_function=lambda feature: {
-            "fillColor": "#3b82f6",
-            "color": "#2563eb",
-            "weight": 1.5,
-            "fillOpacity": 0.04,
-        }
-    ).add_to(m)
+    folium.GeoJson(data=batas_kota, name="Batas Administrasi", style_function=lambda feature: {"fillColor": "#3b82f6", "color": "#2563eb", "weight": 1.5, "fillOpacity": 0.04}).add_to(m)
 
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
-    
     for _, row in df_filtered.iterrows():
         popup_html = f"""
         <div style='font-family: "Segoe UI", Arial; font-size:12px; width:250px; color:#334155;'>
@@ -204,13 +156,13 @@ if not df_filtered.empty:
             </table>
         </div>
         """
-        # DIKOREKSI: Dibuat satu baris padat tanpa jeda enter agar compiler python tidak mendeteksi kurung terbuka terputus
         folium.Marker(location=[row['lat'], row['long']], popup=folium.Popup(popup_html, max_width=280), icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")).add_to(marker_cluster)
 
 st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
 
 # ==========================================
-# 6. TABEL DATA TABULAR & VALIDASI OUTPUT
+# 6. TABEL DATA TABULAR (Struktur Kode Padat & Aman)
 # ==========================================
 st.markdown("### 📊 Dataset Atribut Menara")
-st.dataframe(
+cfg = {"nama_provinsi": "Provinsi", "nama_kabupaten_kota": "Kabupaten/Kota", "nama_kecamatan": "Kecamatan", "nama_desa_kelurahan": "Kelurahan", "pemilik_menara": "Nama Pemilik", "lokasi_menara": "Lokasi Menara", "long": "Bujur (X)", "lat": "Lintang (Y)", "struktur_tower": "Tipe Menara", "tinggi_tower": "Tinggi", "satuan": "Satuan", "tahun": "Tahun", "status_izin": "Status Izin", "no_izin": "No. IMB / PBG"}
+st.dataframe(df_filtered, use_container_width=True, hide_index=True, column_config=cfg)
