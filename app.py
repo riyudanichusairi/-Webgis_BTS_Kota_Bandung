@@ -139,7 +139,7 @@ with st.sidebar:
     selected_basemap = st.selectbox("Pilih Peta Dasar:", list(basemap_options.keys()))
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.2 (Fixed Indentation)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.3 (Prod Baseline)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -198,12 +198,11 @@ def get_marker_color(struktur):
     else:
         return "blue"
 
-# PERBAIKAN BLOK INDENTASI DI SINI
+# Bagian Blok Peta dengan Indentasi yang Dipastikan Aman
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
     ).add_to(m)
-    
     for _, row in df_filtered.iterrows():
         popup_html = f"""
         <div style='font-family: "Segoe UI", Arial; font-size:12px; width:240px; color:#334155;'>
@@ -223,7 +222,6 @@ if not df_filtered.empty:
             popup=folium.Popup(popup_html, max_width=280),
             icon=folium.Icon(color=get_marker_color(row['struktur_tower']), icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
-        
     st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
 else:
     st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter Anda saat ini.")
