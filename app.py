@@ -112,7 +112,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.1 (Syntax Fixed)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.2 (Fully Audited)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
@@ -151,10 +151,10 @@ st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 # Wadah Peta terisolasi agar render Peta tidak mengganggu komponen di bawahnya
 map_container = st.container()
 with map_container:
-    # Mengaktifkan fitur skala garis (control_scale=True) di pojok kiri bawah peta
+    # 1. Inisialisasi Peta dasar dengan Skala di kiri bawah (control_scale=True)
     m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
 
-    # Menambahkan fitur pengukur jarak & luas interaktif (Measure Control)
+    # 2. Tambahkan Alat Ukur Interaktif (Measure Control) di kanan atas
     measure_control = MeasureControl(
         position='topright',
         primary_length_unit='meters',
@@ -162,8 +162,9 @@ with map_container:
         primary_area_unit='sqmeters',
         secondary_area_unit='hectares'
     )
-    measure_control.add_to(m)
+    m.add_child(measure_control)
 
+    # 3. Lapisan Batas Administrasi Kota
     if batas_kota:
         folium.GeoJson(
             data=batas_kota, 
@@ -171,24 +172,21 @@ with map_container:
             style_function=lambda feature: {"fillColor": "#3b82f6", "color": "#2563eb", "weight": 1.5, "fillOpacity": 0.04}
         ).add_to(m)
 
+    # 4. Penanda Titik Menara Menggunakan Marker Cluster
     if not df_filtered.empty:
         marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
+        
         for _, row in df_filtered.iterrows():
-            popup_html = f"""
-            <div style='font-family: "Segoe UI", Arial; font-size:12px; width:250px; color:#334155;'>
-                <h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS</h4>
-                <table style='width:100%; border-collapse: collapse; line-height: 1.5;'>
-                    <tr><td style='vertical-align: top; width:90px;'><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>
-                    <tr><td style='vertical-align: top;'><b>Lokasi</b></td><td>: {row['lokasi_menara']}</td></tr>
-                    <tr><td style='vertical-align: top;'><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>
-                    <tr><td style='vertical-align: top;'><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>
-                    <tr><td style='vertical-align: top;'><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
-                    <tr><td style='vertical-align: top;'><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
-                    <tr><td style='vertical-align: top;'><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
-                    <tr><td style='vertical-align: top;'><b>Status Izin</b></td><td>: {row['status_izin']}</td></tr>
-                    <tr><td style='vertical-align: top;'><b>No. Izin</b></td><td>: {row['no_izin']}</td></tr>
-                </table>
-            </div>
-            """
-            # Bagian pembuatan marker yang diperbaiki tanda kurungnya:
-            folium.Marker(
+            # Pembuatan String HTML Popup yang telah diaudit kebersihannya
+            popup_html = (
+                f"<div style='font-family: \"Segoe UI\", Arial; font-size:12px; width:250px; color:#334155;'>"
+                f"<h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS</h4>"
+                f"<table style='width:100%; border-collapse: collapse; line-height: 1.5;'>"
+                f"<tr><td style='vertical-align: top; width:90px;'><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>"
+                f"<tr><td style='vertical-align: top;'><b>Lokasi</b></td><td>: {row['lokasi_menara']}</td></tr>"
+                f"<tr><td style='vertical-align: top;'><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>"
+                f"<tr><td style='vertical-align: top;'><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>"
+                f"<tr><td style='vertical-align: top;'><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>"
+                f"<tr><td style='vertical-align: top;'><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>"
+                f"<tr><td style='vertical-align: top;'><b>Tahun</b></td><td>: {row['tahun']}</td></tr>"
+                f"<tr><td style='vertical-align: top;'><b>Status Izin</b></td><td>: {row['status_izin']}</td></tr>"
