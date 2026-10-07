@@ -141,7 +141,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur, key=f"strk_{st.session_state.filter_key}")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.6 (Config Refined Build)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.7 (Stable Production Build)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -199,11 +199,11 @@ if not df_filtered.empty:
     ).add_to(m)
     
     for _, row in df_filtered.iterrows():
-        # Parsing string desimal secara aman khusus untuk visual pop-up peta agar rapi
-        clean_id = str(row['id']).split('.')[0]
-        clean_tipe = str(row['struktur_tower']).split('.')[0]
-        clean_tinggi = str(row['tinggi_tower']).split('.')[0]
-        clean_tahun = str(row['tahun']).split('.')[0]
+        # Pembersihan visual kustom untuk pop-up peta agar bebas dari pecahan desimal .0
+        clean_id = str(row['id']).replace('.0', '')
+        clean_tipe = str(row['struktur_tower']).replace('.0', '')
+        clean_tinggi = str(row['tinggi_tower']).replace('.0', '')
+        clean_tahun = str(row['tahun']).replace('.0', '')
 
         popup_html = f"""
         <div style='font-family: "Segoe UI", Arial; font-size:12px; width:240px; color:#334155;'>
