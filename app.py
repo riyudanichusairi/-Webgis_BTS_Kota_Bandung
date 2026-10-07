@@ -79,9 +79,7 @@ def load_and_process_data():
                     "struktur_tower": get_prop(["struktur_tower", "struktur", "tipe", "type"]),
                     "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"]),
                     "satuan": get_prop(["satuan", "unit"], "Meter"),
-                    "tahun": get_prop(["tahun", "tahun_berdiri", "thn"]),
-                    "status_izin": get_prop(["status_izin", "status", "izin", "legalitas"], "-"),
-                    "no_izin": get_prop(["no_izin", "nomor_sk", "imb", "pbg"], "-")
+                    "tahun": get_prop(["tahun", "tahun_berdiri", "thn"])
                 })
                 
     df = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
