@@ -3,6 +3,8 @@ import folium
 from folium.plugins import MarkerCluster, MeasureControl
 import json
 import pandas as pd
+# Menggunakan st_folium atau komponen html yang dibungkus dengan benar
+import streamlit.components.v1 as components
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN & THEME GLOBAL
@@ -21,6 +23,8 @@ st.markdown("""
     [data-testid="stSidebar"] .stSelectbox label, [data-testid="stSidebar"] .stMultiSelect label { color: #cbd5e1 !important; font-weight: 500; }
     .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
     .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
+    /* Memastikan kontainer iframe peta memiliki ruang pembungkus */
+    iframe { border: none; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
     </style>
     """, unsafe_allow_html=True)
 
@@ -46,7 +50,6 @@ def load_and_process_data():
             if geom and geom.get("type") == "Point":
                 lon, lat = geom["coordinates"]
                 
-                # Validasi dasar koordinat agar tidak merusak JavaScript Leaflet
                 try:
                     lat_val = float(lat)
                     lon_val = float(lon)
@@ -96,15 +99,12 @@ batas_kota, df_all = load_and_process_data()
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    # Filter ID Menara
     list_id = sorted([x for x in df_all["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
     selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
     
-    # Filter Wilayah Kecamatan (Menggunakan Multiselect)
     list_kec = sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.multiselect("Wilayah Kecamatan:", list_kec, placeholder="Pilih atau ketik Kecamatan...")
     
-    # Filter Wilayah Kelurahan (Menggunakan Multiselect & dinamis mengikuti kecamatan terpilih)
     if selected_kec:
         df_kec_filtered = df_all[df_all["nama_kecamatan"].isin(selected_kec)]
         list_kel = sorted([x for x in df_kec_filtered["nama_desa_kelurahan"].unique() if x != "-"])
@@ -112,39 +112,32 @@ with st.sidebar:
         list_kel = sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
     selected_kel = st.multiselect("Wilayah Kelurahan:", list_kel, placeholder="Pilih atau ketik Kelurahan...")
     
-    # Filter Provider / Pemilik Menara (Menggunakan Multiselect)
     list_pemilik = sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
     selected_pemilik = st.multiselect("Provider / Pemilik:", list_pemilik, placeholder="Pilih atau ketik Provider...")
     
-    # Filter Jenis Struktur (Menggunakan Multiselect)
     list_struktur = sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
     selected_struktur = st.multiselect("Jenis Struktur:", list_struktur, placeholder="Pilih atau ketik Jenis Struktur...")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.5.0 (All Multiselect Mode)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.5.1 (Map Render Fixed)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF (.isin)
 # ==========================================
 df_filtered = df_all.copy()
 
-# Menyaring berdasarkan ID Menara
 if selected_id:
     df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
 
-# Menyaring berdasarkan Kecamatan
 if selected_kec: 
     df_filtered = df_filtered[df_filtered["nama_kecamatan"].isin(selected_kec)]
 
-# Menyaring berdasarkan Kelurahan
 if selected_kel: 
     df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"].isin(selected_kel)]
 
-# Menyaring berdasarkan Provider / Pemilik Menara
 if selected_pemilik: 
     df_filtered = df_filtered[df_filtered["pemilik_menara"].isin(selected_pemilik)]
 
-# Menyaring berdasarkan Jenis Struktur Tower
 if selected_struktur: 
     df_filtered = df_filtered[df_filtered["struktur_tower"].isin(selected_struktur)]
 
@@ -165,21 +158,16 @@ with m4: st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique(
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-# Inisialisasi Peta dasar dengan Skala bawaan di kiri bawah
+# Inisialisasi Peta dasar dengan koordinat Kota Bandung
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
 
-# Menambahkan fitur pengukur jarak & luas interaktif (Measure Control) di kiri atas
 measure_control = MeasureControl(
     position='topleft',
     primary_length_unit='meters',
     secondary_length_unit='kilometers',
     primary_area_unit='sqmeters',
     secondary_area_unit='hectares',
-    line_options={
-        'color': '#1d4ed8',
-        'weight': 5,
-        'opacity': 0.8
-    }
+    line_options={'color': '#1d4ed8', 'weight': 5, 'opacity': 0.8}
 )
 m.add_child(measure_control)
 
@@ -210,6 +198,17 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# Render menggunakan HTML kontainer statis demi keamanan JavaScript
-import streamlit.components.v1 as components
+# --- PERBAIKAN UTAMA RENDER PETA ---
+# Menggunakan penanganan kompilasi objek HTML m HTML bawaan yang eksplisit dan bersih
 html_map = m._repr_html_()
+components.html(html_map, height=550, scrolling=False)
+
+# ==========================================
+# 6. TABEL DATA TABULAR
+# ==========================================
+st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
+
+if df_filtered.empty:
+    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
+else:
+    st.dataframe(df_filtered, use_container_width=True)
