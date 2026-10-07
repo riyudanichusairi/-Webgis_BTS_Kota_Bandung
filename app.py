@@ -4,7 +4,6 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 import json
 import pandas as pd
-import plotly.express as px
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN & THEME GLOBAL
@@ -131,7 +130,7 @@ with st.sidebar:
     selected_basemap = st.selectbox("Pilih Peta Dasar:", list(basemap_options.keys()))
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.0 (Linear Stable)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.1 (No-Plotly Stable)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -190,7 +189,6 @@ def get_marker_color(struktur):
     else:
         return "blue"
 
-# HENTIKAN APABILA DATA KOSONG LEBIH AWAL AGAR TIDAK PERLU PROSES TABS/INDENTASI BERSARANG
 if df_filtered.empty:
     st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter Anda saat ini.")
 else:
@@ -219,11 +217,15 @@ else:
     st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
 
 # ==========================================
-# 6. VISUALISASI GRAFIK ANALISIS
+# 6. VISUALISASI GRAFIK ANALISIS (MENGGUNAKAN GRAFIK BAWAAN STREAMLIT)
 # ==========================================
 if not df_filtered.empty:
     st.markdown("### 📊 Analisis & Statistik Infrastruktur")
     c1, c2 = st.columns(2)
     
     with c1:
-        top_pemilik = df_filtered['pemilik_menara'].value_counts().reset_index(name='Jumlah').head(5)
+        st.markdown("**Top 5 Pemilik Menara Terbanyak**")
+        top_pemilik = df_filtered['pemilik_menara'].value_counts().head(5)
+        st.bar_chart(top_pemilik)
+        
+    with c2:
