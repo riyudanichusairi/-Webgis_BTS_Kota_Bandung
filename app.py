@@ -1,6 +1,6 @@
 import streamlit as st
 import folium
-from folium.plugins import MarkerCluster
+from folium.plugins import MarkerCluster, MeasureControl  # <-- Mengimpor MeasureControl di sini
 from streamlit_folium import st_folium
 import json
 import pandas as pd
@@ -112,7 +112,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.9 (Scale Added)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.0 (Measure Tool Added)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
@@ -154,6 +154,16 @@ with map_container:
     # Mengaktifkan fitur skala garis (control_scale=True) di pojok kiri bawah peta
     m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
 
+    # TAMBAHAN: Menambahkan fitur pengukur jarak & luas interaktif (Measure Control)
+    measure_control = MeasureControl(
+        position='topright',
+        primary_length_unit='meters',
+        secondary_length_unit='kilometers',
+        primary_area_unit='sqmeters',
+        secondary_area_unit='hectares'
+    )
+    measure_control.add_to(m)
+
     if batas_kota:
         folium.GeoJson(
             data=batas_kota, 
@@ -181,11 +191,3 @@ with map_container:
             </div>
             """
             folium.Marker(
-                location=[row['lat'], row['long']], 
-                popup=folium.Popup(popup_html, max_width=280), 
-                icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
-            ).add_to(marker_cluster)
-
-    # Key dinamis pada st_folium untuk mencegah pembekuan render komponen lain
-    st_folium(m, width="100%", height=520, key=f"webgis_map_len_{len(df_filtered)}", returned_objects=[])
-
