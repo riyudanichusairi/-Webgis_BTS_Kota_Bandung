@@ -105,7 +105,6 @@ def load_and_process_data():
                 
     if raw_rows:
         df = pd.DataFrame(raw_rows)
-        # Paksa format string agar tidak menjadi float pecahan (.0)
         df["id"] = df["id"].astype(str)
         df["struktur_tower"] = df["struktur_tower"].astype(str)
         df["tinggi_tower"] = df["tinggi_tower"].astype(str)
@@ -120,7 +119,6 @@ def load_and_process_data():
 # Eksekusi fungsi load data
 batas_kota, df_all = load_and_process_data()
 
-# Terapkan pengaman jika dataframe kosong agar tidak membuat web crash/blank
 if df_all.empty:
     st.warning("Data menara tidak ditemukan atau gagal dimuat dari file GeoJSON.")
     st.stop()
@@ -167,7 +165,6 @@ if selected_struktur != "Semua Struktur Tower":
 st.markdown("<div class='main-title'>Geographic Information System Menara BTS</div>", unsafe_allow_html=True)
 st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi Digital Kota Bandung</div>", unsafe_allow_html=True)
 
-# Ringkasan Statistik Utama Komponen Metric
 m1, m2, m3, m4 = st.columns(4)
 with m1:
     st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
@@ -234,3 +231,8 @@ st.dataframe(
     hide_index=True,
     column_config={
         "id": "ID Menara",
+        "pemilik_menara": "Nama Pemilik",
+        "nama_kecamatan": "Kecamatan",
+        "nama_desa_kelurahan": "Kelurahan",
+        "struktur_tower": "Tipe Menara",
+        "tinggi_tower": "Tinggi",
