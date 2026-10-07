@@ -55,7 +55,6 @@ st.markdown("""
 # ==========================================
 @st.cache_data(show_spinner="Memuat data spasial...")
 def load_and_process_data():
-    # Fungsi pembacaan GeoJSON aman
     def read_json(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -75,7 +74,6 @@ def load_and_process_data():
             if geom and geom.get("type") == "Point":
                 lon, lat = geom["coordinates"]
                 
-                # Fungsi ekstraksi properti kebal error data kosong & numerik
                 def get_prop(keys_list, default="-"):
                     for k in keys_list:
                         for actual_key in props.keys():
@@ -83,7 +81,6 @@ def load_and_process_data():
                                 val = props[actual_key]
                                 if val is None:
                                     return default
-                                # Membersihkan format float bulat (contoh: 4.0 menjadi 4)
                                 if isinstance(val, float) and val.is_integer():
                                     return str(int(val))
                                 return str(val).strip()
@@ -103,8 +100,6 @@ def load_and_process_data():
                     "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"]),
                     "satuan": get_prop(["satuan", "unit"], "Meter"),
                     "tahun": get_prop(["tahun", "tahun_berdiri", "thn"]),
-                    
-                    # Kolom keterangan tambahan terbaru Anda
                     "status_izin": get_prop(["status_izin", "status", "izin", "legalitas"], "-"),
                     "no_izin": get_prop(["no_izin", "nomor_sk", "imb", "pbg"], "-")
                 })
@@ -116,7 +111,6 @@ def load_and_process_data():
     ])
     return batas_kota, df
 
-# Eksekusi fungsi load data
 batas_kota, df_all = load_and_process_data()
 
 # ==========================================
@@ -142,7 +136,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.3 (Hotfix Syntax)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.4 (Strict Syntax Fix)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -191,9 +185,7 @@ if batas_kota:
     ).add_to(m)
 
 if not df_filtered.empty:
-    marker_cluster = MarkerCluster(
-        options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
-    ).add_to(m)
+    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
     
     for _, row in df_filtered.iterrows():
         popup_html = f"""
@@ -212,7 +204,13 @@ if not df_filtered.empty:
             </table>
         </div>
         """
-        # Pembuatan marker dipastikan memiliki tanda kurung lengkap dan tertutup dengan benar
-        folium.Marker(
-            location=[row['lat'], row['long']],
-            popup=folium.Popup(popup_html, max_width=280),
+        # DIKOREKSI: Dibuat satu baris padat tanpa jeda enter agar compiler python tidak mendeteksi kurung terbuka terputus
+        folium.Marker(location=[row['lat'], row['long']], popup=folium.Popup(popup_html, max_width=280), icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")).add_to(marker_cluster)
+
+st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
+
+# ==========================================
+# 6. TABEL DATA TABULAR & VALIDASI OUTPUT
+# ==========================================
+st.markdown("### 📊 Dataset Atribut Menara")
+st.dataframe(
