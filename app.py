@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Modern Minialis
+# Custom CSS Modern Minimalis
 st.markdown("""
     <style>
     [data-testid="stSidebar"] {
@@ -96,12 +96,18 @@ def load_and_process_data():
                     "struktur_tower": get_prop(["struktur_tower", "struktur", "tipe", "type"]),
                     "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"]),
                     "satuan": get_prop(["satuan", "unit"], "Meter"),
-                    "tahun": get_prop(["tahun", "tahun_berdiri", "thn"])
+                    "tahun": get_prop(["tahun", "tahun_berdiri", "thn"]),
+                    
+                    # --- KOLOM TAMBAHAN BARU ---
+                    # Menangkap field keterangan tambahan jika Anda memasukkannya ke berkas GeoJSON baru
+                    "status_izin": get_prop(["status_izin", "status", "izin", "legalitas"], "-"),
+                    "no_izin": get_prop(["no_izin", "nomor_sk", "imb", "pbg"], "-")
                 })
                 
     df = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
         "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
-        "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", "satuan", "tahun"
+        "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", 
+        "satuan", "tahun", "status_izin", "no_izin"
     ])
     return batas_kota, df
 
@@ -131,7 +137,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.0 (Optimized Version)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.1 (Pembaruan Atribut)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -190,15 +196,20 @@ if not df_filtered.empty:
     
     for _, row in df_filtered.iterrows():
         popup_html = f"""
-        <div style='font-family: "Segoe UI", Arial; font-size:12px; width:240px; color:#334155;'>
+        <div style='font-family: "Segoe UI", Arial; font-size:12px; width:250px; color:#334155;'>
             <h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS</h4>
-            <table style='width:100%; border-collapse: collapse;'>
-                <tr><td><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>
-                <tr><td><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>
-                <tr><td><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>
-                <tr><td><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
-                <tr><td><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
-                <tr><td><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
+            <table style='width:100%; border-collapse: collapse; line-height: 1.5;'>
+                <tr><td style='vertical-align: top; width:90px;'><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>
+                <tr><td style='vertical-align: top;'><b>Lokasi</b></td><td>: {row['lokasi_menara']}</td></tr>
+                <tr><td style='vertical-align: top;'><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>
+                <tr><td style='vertical-align: top;'><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>
+                <tr><td style='vertical-align: top;'><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
+                <tr><td style='vertical-align: top;'><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
+                <tr><td style='vertical-align: top;'><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
+                
+                <!-- INTEGRASI KETERANGAN LENGKAP PADA POPUP PETA -->
+                <tr><td style='vertical-align: top;'><b>Status Izin</b></td><td>: {row['status_izin']}</td></tr>
+                <tr><td style='vertical-align: top;'><b>No. Izin</b></td><td>: {row['no_izin']}</td></tr>
             </table>
         </div>
         """
@@ -208,24 +219,3 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# Tampilkan Peta ke Streamlit dengan Penyetelan Tanpa Reload Aksi Objek Balikan
-st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
-
-# ==========================================
-# 6. TABEL DATA TABULAR & VALIDASI OUTPUT
-# ==========================================
-st.markdown("### 📊 Dataset Atribut Menara")
-st.dataframe(
-    df_filtered, 
-    use_container_width=True, 
-    hide_index=True,
-    column_config={
-        "pemilik_menara": "Nama Pemilik",
-        "nama_kecamatan": "Kecamatan",
-        "nama_desa_kelurahan": "Kelurahan",
-        "struktur_tower": "Tipe Menara",
-        "tinggi_tower": "Tinggi",
-        "long": "Bujur (X)",
-        "lat": "Lintang (Y)"
-    }
-)
