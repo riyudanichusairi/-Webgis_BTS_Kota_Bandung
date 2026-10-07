@@ -1,7 +1,6 @@
 import streamlit as st
 import folium
 from folium.plugins import MarkerCluster, MeasureControl
-from streamlit_folium import st_folium
 import json
 import pandas as pd
 
@@ -35,7 +34,6 @@ def load_and_process_data():
             with open(path, "r", encoding="utf-8") as f: return json.load(f)
         except Exception: return None
 
-    # Integrasi berkas sesuai dengan repositori GitHub Anda
     batas_kota = read_json("batas_kota_bandung.geojson")
     data_bts = read_json("BTS_kota_bandung.geojson")
     
@@ -48,6 +46,13 @@ def load_and_process_data():
             if geom and geom.get("type") == "Point":
                 lon, lat = geom["coordinates"]
                 
+                # Validasi dasar koordinat agar tidak merusak JavaScript Leaflet
+                try:
+                    lat_val = float(lat)
+                    lon_val = float(lon)
+                except ValueError:
+                    continue
+
                 def get_prop(keys_list, default="-"):
                     for k in keys_list:
                         for actual_key in props.keys():
@@ -66,8 +71,8 @@ def load_and_process_data():
                     "nama_desa_kelurahan": get_prop(["nama_desa_kelurahan", "kelurahan", "desa", "kel"]),
                     "pemilik_menara": get_prop(["pemilik_menara", "pemilik", "provider", "operator", "site_name", "nama"]),
                     "lokasi_menara": get_prop(["lokasi_menara", "lokasi", "alamat"]),
-                    "long": lon,
-                    "lat": lat,
+                    "long": lon_val,
+                    "lat": lat_val,
                     "struktur_tower": get_prop(["struktur_tower", "struktur", "tipe", "type"]),
                     "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"]),
                     "satuan": get_prop(["satuan", "unit"], "Meter"),
@@ -91,11 +96,9 @@ batas_kota, df_all = load_and_process_data()
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    # Filter 1: Kecamatan
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
     
-    # Filter 2: Kelurahan (Hierarkis bersandar pada Kecamatan terpilih)
     if selected_kec != "Semua Kecamatan":
         df_kec_filtered = df_all[df_all["nama_kecamatan"] == selected_kec]
         list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_kec_filtered["nama_desa_kelurahan"].unique() if x != "-"])
@@ -103,16 +106,14 @@ with st.sidebar:
         list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
     selected_kel = st.selectbox("Wilayah Kelurahan:", list_kel)
     
-    # Filter 3: Pemilik Menara
     list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
     selected_pemilik = st.selectbox("Provider / Pemilik:", list_pemilik)
     
-    # Filter 4: Jenis Struktur
     list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.2 (Fully Audited)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.5 (Blank Fix)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
@@ -144,49 +145,75 @@ with m3: st.metric("Entitas Pemilik", f"{df_filtered['pemilik_menara'].nunique()
 with m4: st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique()}")
 
 # ==========================================
-# 5. PETA INTERAKTIF DIGITAL (Menggunakan Isolasi Kontainer)
+# 5. PETA INTERAKTIF DIGITAL
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-# Wadah Peta terisolasi agar render Peta tidak mengganggu komponen di bawahnya
-map_container = st.container()
-with map_container:
-    # 1. Inisialisasi Peta dasar dengan Skala di kiri bawah (control_scale=True)
-    m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
+# Inisialisasi Peta dasar dengan Skala bawaan di kiri bawah
+m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
 
-    # 2. Tambahkan Alat Ukur Interaktif (Measure Control) di kanan atas
-    measure_control = MeasureControl(
-        position='topright',
-        primary_length_unit='meters',
-        secondary_length_unit='kilometers',
-        primary_area_unit='sqmeters',
-        secondary_area_unit='hectares'
+# Menambahkan fitur pengukur jarak & luas interaktif (Measure Control)
+measure_control = MeasureControl(
+    position='topright',
+    primary_length_unit='meters',
+    secondary_length_unit='kilometers',
+    primary_area_unit='sqmeters',
+    secondary_area_unit='hectares'
+)
+m.add_child(measure_control)
+
+if batas_kota:
+    folium.GeoJson(
+        data=batas_kota, 
+        name="Batas Administrasi", 
+        style_function=lambda feature: {"fillColor": "#3b82f6", "color": "#2563eb", "weight": 1.5, "fillOpacity": 0.04}
+    ).add_to(m)
+
+if not df_filtered.empty:
+    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
+    
+    for _, row in df_filtered.iterrows():
+        popup_html = f"""
+        <div style="font-family: Arial, sans-serif; font-size:12px; width:220px;">
+            <b>Pemilik:</b> {row['pemilik_menara']}<br>
+            <b>Lokasi:</b> {row['lokasi_menara']}<br>
+            <b>Kecamatan:</b> {row['nama_kecamatan']}<br>
+            <b>Struktur:</b> {row['struktur_tower']}<br>
+            <b>Tinggi:</b> {row['tinggi_tower']} {row['satuan']}
+        </div>
+        """
+        folium.Marker(
+            location=[row['lat'], row['long']],
+            popup=folium.Popup(popup_html, max_width=250),
+            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
+        ).add_to(marker_cluster)
+
+# ALTERNATIF PENGAMAN RENDER JAVASCRIPT:
+# Menggunakan komponen HTML statis bawaan Streamlit agar halaman tidak blank/beku akibat library conflict
+import streamlit.components.v1 as components
+html_map = m._repr_html_()
+components.html(html_map, height=520, scrolling=True)
+
+# ==========================================
+# 6. TABEL DATA TABULAR
+# ==========================================
+st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
+
+if not df_filtered.empty:
+    df_display = df_filtered[[
+        "id", "pemilik_menara", "struktur_tower", "tinggi_tower", "satuan",
+        "nama_kecamatan", "nama_desa_kelurahan", "lokasi_menara", "tahun"
+    ]].copy()
+    
+    df_display.columns = [
+        "ID", "Pemilik / Provider", "Jenis Struktur", "Tinggi", "Satuan",
+        "Kecamatan", "Kelurahan", "Alamat Lokasi", "Tahun Berdiri"
+    ]
+    
+    st.dataframe(
+        df_display, 
+        use_container_width=True, 
+        hide_index=True
     )
-    m.add_child(measure_control)
-
-    # 3. Lapisan Batas Administrasi Kota
-    if batas_kota:
-        folium.GeoJson(
-            data=batas_kota, 
-            name="Batas Administrasi", 
-            style_function=lambda feature: {"fillColor": "#3b82f6", "color": "#2563eb", "weight": 1.5, "fillOpacity": 0.04}
-        ).add_to(m)
-
-    # 4. Penanda Titik Menara Menggunakan Marker Cluster
-    if not df_filtered.empty:
-        marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
-        
-        for _, row in df_filtered.iterrows():
-            # Pembuatan String HTML Popup yang telah diaudit kebersihannya
-            popup_html = (
-                f"<div style='font-family: \"Segoe UI\", Arial; font-size:12px; width:250px; color:#334155;'>"
-                f"<h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS</h4>"
-                f"<table style='width:100%; border-collapse: collapse; line-height: 1.5;'>"
-                f"<tr><td style='vertical-align: top; width:90px;'><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>"
-                f"<tr><td style='vertical-align: top;'><b>Lokasi</b></td><td>: {row['lokasi_menara']}</td></tr>"
-                f"<tr><td style='vertical-align: top;'><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>"
-                f"<tr><td style='vertical-align: top;'><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>"
-                f"<tr><td style='vertical-align: top;'><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>"
-                f"<tr><td style='vertical-align: top;'><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>"
-                f"<tr><td style='vertical-align: top;'><b>Tahun</b></td><td>: {row['tahun']}</td></tr>"
-                f"<tr><td style='vertical-align: top;'><b>Status Izin</b></td><td>: {row['status_izin']}</td></tr>"
+else:
+    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
