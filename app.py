@@ -39,13 +39,11 @@ st.markdown("""
         font-size: 14px;
         margin-bottom: 25px;
     }
-    .card-container {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    div[data-testid="stMetric"] {
+        background-color: #f8fafc;
+        padding: 10px 15px;
+        border-radius: 6px;
         border: 1px solid #e2e8f0;
-        margin-bottom: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -55,7 +53,6 @@ st.markdown("""
 # ==========================================
 @st.cache_data(show_spinner="Memuat data spasial...")
 def load_and_process_data():
-    # Fungsi pembacaan GeoJSON aman
     def read_json(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -105,33 +102,46 @@ def load_and_process_data():
     ])
     return batas_kota, df
 
-# Eksekusi fungsi load data terpangkas cache
+# Eksekusi fungsi load data
 batas_kota, df_all = load_and_process_data()
 
 # ==========================================
-# 3. CONTROL PANEL (SIDEBAR FILTER)
+# 3. MEKANISME RESET FILTER AMAN
+# ==========================================
+if "filter_key" not in st.session_state:
+    st.session_state.filter_key = 0
+
+def memicu_reset():
+    st.session_state.filter_key += 1
+
+# ==========================================
+# 4. CONTROL PANEL (SIDEBAR FILTER)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:10px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
+    
+    st.button("🔄 Reset Semua Filter", on_click=memicu_reset, use_container_width=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
-    selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
+    selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec, key=f"kec_{st.session_state.filter_key}")
     
     if selected_kec != "Semua Kecamatan":
         df_filtered_kec = df_all[df_all["nama_kecamatan"] == selected_kec]
         list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_filtered_kec["nama_desa_kelurahan"].unique() if x != "-"])
     else:
         list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
-    selected_kel = st.selectbox("Wilayah Kelurahan:", list_kel)
+        
+    selected_kel = st.selectbox("Wilayah Kelurahan:", list_kel, key=f"kel_{st.session_state.filter_key}")
     
     list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
-    selected_pemilik = st.selectbox("Provider / Pemilik:", list_pemilik)
+    selected_pemilik = st.selectbox("Provider / Pemilik:", list_pemilik, key=f"pmlk_{st.session_state.filter_key}")
     
     list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
-    selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
+    selected_struktur = st.selectbox("Jenis Struktur:", list_struktur, key=f"strk_{st.session_state.filter_key}")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.0 (Optimized Version)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.6 (Config Refined Build)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -145,7 +155,7 @@ if selected_struktur != "Semua Struktur Tower":
     df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
 
 # ==========================================
-# 4. KONTEN UTAMA & HEADER DASHBOARD
+# 5. KONTEN UTAMA & HEADER DASHBOARD
 # ==========================================
 st.markdown("<div class='main-title'>Geographic Information System Menara BTS</div>", unsafe_allow_html=True)
 st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi Digital Kota Bandung</div>", unsafe_allow_html=True)
@@ -162,7 +172,7 @@ with m4:
     st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique()}")
 
 # ==========================================
-# 5. PETA INTERAKTIF DIGITAL
+# 6. PETA INTERAKTIF DIGITAL
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
@@ -189,16 +199,22 @@ if not df_filtered.empty:
     ).add_to(m)
     
     for _, row in df_filtered.iterrows():
+        # Parsing string desimal secara aman khusus untuk visual pop-up peta agar rapi
+        clean_id = str(row['id']).split('.')[0]
+        clean_tipe = str(row['struktur_tower']).split('.')[0]
+        clean_tinggi = str(row['tinggi_tower']).split('.')[0]
+        clean_tahun = str(row['tahun']).split('.')[0]
+
         popup_html = f"""
         <div style='font-family: "Segoe UI", Arial; font-size:12px; width:240px; color:#334155;'>
-            <h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS</h4>
+            <h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS (ID: {clean_id})</h4>
             <table style='width:100%; border-collapse: collapse;'>
                 <tr><td><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>
                 <tr><td><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>
                 <tr><td><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>
-                <tr><td><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
-                <tr><td><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
-                <tr><td><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
+                <tr><td><b>Struktur</b></td><td>: {clean_tipe}</td></tr>
+                <tr><td><b>Dimensi</b></td><td>: {clean_tinggi} {row['satuan']}</td></tr>
+                <tr><td><b>Tahun</b></td><td>: {clean_tahun}</td></tr>
             </table>
         </div>
         """
@@ -208,24 +224,8 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# Tampilkan Peta ke Streamlit dengan Penyetelan Tanpa Reload Aksi Objek Balikan
 st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
 
 # ==========================================
-# 6. TABEL DATA TABULAR & VALIDASI OUTPUT
+# 7. ANALISIS GRAFIK STATISTIK
 # ==========================================
-st.markdown("### 📊 Dataset Atribut Menara")
-st.dataframe(
-    df_filtered, 
-    use_container_width=True, 
-    hide_index=True,
-    column_config={
-        "pemilik_menara": "Nama Pemilik",
-        "nama_kecamatan": "Kecamatan",
-        "nama_desa_kelurahan": "Kelurahan",
-        "struktur_tower": "Tipe Menara",
-        "tinggi_tower": "Tinggi",
-        "long": "Bujur (X)",
-        "lat": "Lintang (Y)"
-    }
-)
