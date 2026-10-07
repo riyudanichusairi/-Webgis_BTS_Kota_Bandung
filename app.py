@@ -113,7 +113,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.0 (Blue Measure Added)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.1 (Indentation Audited)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
@@ -152,7 +152,7 @@ st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 # Inisialisasi Peta dasar dengan Skala bawaan di kiri bawah
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
 
-# MODIFIKASI UKURAN DAN WARNA GARIS MEASURE CONTROL
+# Menambahkan fitur pengukur jarak & luas interaktif (Measure Control) warna biru tua
 measure_control = MeasureControl(
     position='topright',
     primary_length_unit='meters',
@@ -160,9 +160,9 @@ measure_control = MeasureControl(
     primary_area_unit='sqmeters',
     secondary_area_unit='hectares',
     line_options={
-        'color': '#1d4ed8',  # Warna Biru Tua
-        'weight': 5,         # Garis Lebih Tebal
-        'opacity': 0.8       # Transparansi Optimal
+        'color': '#1d4ed8',
+        'weight': 5,
+        'opacity': 0.8
     }
 )
 m.add_child(measure_control)
@@ -220,3 +220,4 @@ if not df_filtered.empty:
         hide_index=True
     )
 else:
+    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
