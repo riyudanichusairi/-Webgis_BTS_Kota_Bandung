@@ -55,7 +55,6 @@ st.markdown("""
 # ==========================================
 @st.cache_data(show_spinner="Memuat data spasial...")
 def load_and_process_data():
-    # Fungsi pembacaan GeoJSON aman
     def read_json(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -81,11 +80,10 @@ def load_and_process_data():
                             if actual_key.lower().strip() == k.lower().strip():
                                 val = props[actual_key]
                                 if val is not None:
-                                    # HILANGKAN .0 JIKA ADA: Mengubah float/int ke string bersih tanpa desimal
                                     val_str = str(val).strip()
                                     if val_str.endswith('.0'):
                                         val_str = val_str[:-2]
-                                    return val_str
+                                    return val_str if val_str != "" else default
                                 return default
                     return default
 
@@ -107,7 +105,7 @@ def load_and_process_data():
                 
     if raw_rows:
         df = pd.DataFrame(raw_rows)
-        # PAKSA KOLOM MENJADI TEKS/STRING AGAR PANDAS TIDAK MENGUBAHNYA KE FLOAT
+        # Paksa format string agar tidak menjadi float pecahan (.0)
         df["id"] = df["id"].astype(str)
         df["struktur_tower"] = df["struktur_tower"].astype(str)
         df["tinggi_tower"] = df["tinggi_tower"].astype(str)
@@ -117,8 +115,122 @@ def load_and_process_data():
             "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
             "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", "satuan", "tahun"
         ])
-        
     return batas_kota, df
 
-# Eksekusi fungsi load data terpangkas cache
+# Eksekusi fungsi load data
 batas_kota, df_all = load_and_process_data()
+
+# Terapkan pengaman jika dataframe kosong agar tidak membuat web crash/blank
+if df_all.empty:
+    st.warning("Data menara tidak ditemukan atau gagal dimuat dari file GeoJSON.")
+    st.stop()
+
+# ==========================================
+# 3. CONTROL PANEL (SIDEBAR FILTER)
+# ==========================================
+with st.sidebar:
+    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
+    
+    list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x and x != "-"])
+    selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
+    
+    if selected_kec != "Semua Kecamatan":
+        df_filtered_kec = df_all[df_all["nama_kecamatan"] == selected_kec]
+        list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_filtered_kec["nama_desa_kelurahan"].unique() if x and x != "-"])
+    else:
+        list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x and x != "-"])
+    selected_kel = st.selectbox("Wilayah Kelurahan:", list_kel)
+    
+    list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x and x != "-"])
+    selected_pemilik = st.selectbox("Provider / Pemilik:", list_pemilik)
+    
+    list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x and x != "-"])
+    selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
+    
+    st.markdown("---")
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.0 (Optimized Version)</div>", unsafe_allow_html=True)
+
+# Proses Penjaringan Data Spasial Aktif
+df_filtered = df_all.copy()
+if selected_kec != "Semua Kecamatan":
+    df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
+if selected_kel != "Semua Desa/Kelurahan":
+    df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
+if selected_pemilik != "Semua Pemilik Menara":
+    df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
+if selected_struktur != "Semua Struktur Tower":
+    df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
+
+# ==========================================
+# 4. KONTEN UTAMA & HEADER DASHBOARD
+# ==========================================
+st.markdown("<div class='main-title'>Geographic Information System Menara BTS</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi Digital Kota Bandung</div>", unsafe_allow_html=True)
+
+# Ringkasan Statistik Utama Komponen Metric
+m1, m2, m3, m4 = st.columns(4)
+with m1:
+    st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
+with m2:
+    st.metric("Cakupan Kecamatan", f"{df_filtered['nama_kecamatan'].nunique()}")
+with m3:
+    st.metric("Entitas Pemilik", f"{df_filtered['pemilik_menara'].nunique()}")
+with m4:
+    st.metric("Variasi Struktur", f"{df_filtered['struktur_tower'].nunique()}")
+
+# ==========================================
+# 5. PETA INTERAKTIF DIGITAL
+# ==========================================
+st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
+
+m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap")
+
+if batas_kota:
+    folium.GeoJson(
+        data=batas_kota,
+        name="Batas Administrasi",
+        style_function=lambda feature: {
+            "fillColor": "#3b82f6",
+            "color": "#2563eb",
+            "weight": 1.5,
+            "fillOpacity": 0.04,
+        }
+    ).add_to(m)
+
+if not df_filtered.empty:
+    marker_cluster = MarkerCluster(
+        options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
+    ).add_to(m)
+    
+    for _, row in df_filtered.iterrows():
+        popup_html = f"""
+        <div style='font-family: "Segoe UI", Arial; font-size:12px; width:240px; color:#334155;'>
+            <h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS</h4>
+            <table style='width:100%; border-collapse: collapse;'>
+                <tr><td><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>
+                <tr><td><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>
+                <tr><td><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>
+                <tr><td><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
+                <tr><td><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
+                <tr><td><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
+            </table>
+        </div>
+        """
+        folium.Marker(
+            location=[float(row['lat']), float(row['long'])],
+            popup=folium.Popup(popup_html, max_width=280),
+            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
+        ).add_to(marker_cluster)
+
+st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
+
+# ==========================================
+# 6. TABEL DATA TABULAR & VALIDASI OUTPUT
+# ==========================================
+st.markdown("### 📊 Dataset Atribut Menara")
+st.dataframe(
+    df_filtered, 
+    use_container_width=True, 
+    hide_index=True,
+    column_config={
+        "id": "ID Menara",
