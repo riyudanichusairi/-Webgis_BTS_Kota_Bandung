@@ -113,7 +113,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.5 (Blank Fix)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.0 (Blue Measure Added)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
@@ -152,13 +152,18 @@ st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 # Inisialisasi Peta dasar dengan Skala bawaan di kiri bawah
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
 
-# Menambahkan fitur pengukur jarak & luas interaktif (Measure Control)
+# MODIFIKASI UKURAN DAN WARNA GARIS MEASURE CONTROL
 measure_control = MeasureControl(
     position='topright',
     primary_length_unit='meters',
     secondary_length_unit='kilometers',
     primary_area_unit='sqmeters',
-    secondary_area_unit='hectares'
+    secondary_area_unit='hectares',
+    line_options={
+        'color': '#1d4ed8',  # Warna Biru Tua
+        'weight': 5,         # Garis Lebih Tebal
+        'opacity': 0.8       # Transparansi Optimal
+    }
 )
 m.add_child(measure_control)
 
@@ -188,8 +193,7 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# ALTERNATIF PENGAMAN RENDER JAVASCRIPT:
-# Menggunakan komponen HTML statis bawaan Streamlit agar halaman tidak blank/beku akibat library conflict
+# Render menggunakan HTML kontainer statis demi keamanan JavaScript
 import streamlit.components.v1 as components
 html_map = m._repr_html_()
 components.html(html_map, height=520, scrolling=True)
@@ -216,4 +220,3 @@ if not df_filtered.empty:
         hide_index=True
     )
 else:
-    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
