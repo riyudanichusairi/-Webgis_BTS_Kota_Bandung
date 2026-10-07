@@ -139,7 +139,7 @@ with st.sidebar:
     selected_basemap = st.selectbox("Pilih Peta Dasar:", list(basemap_options.keys()))
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.1 (Fixed Error)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.2 (Fixed Indentation)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -198,6 +198,7 @@ def get_marker_color(struktur):
     else:
         return "blue"
 
+# PERBAIKAN BLOK INDENTASI DI SINI
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
@@ -217,7 +218,6 @@ if not df_filtered.empty:
             </table>
         </div>
         """
-        # DI SINI PERBAIKANNYA: Menambahkan kurung tutup ")" sebelum .add_to()
         folium.Marker(
             location=[row['lat'], row['long']],
             popup=folium.Popup(popup_html, max_width=280),
