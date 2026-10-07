@@ -166,7 +166,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.6.5 (ILoc Syntax Fixed)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.7.0 (Fixed Iloc Correctly)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF (LOGIKA FILTER)
@@ -181,7 +181,7 @@ if search_id.strip():
     df_id_match = df_all[df_all["id"].str.strip() == search_id.strip()]
     if not df_id_match.empty:
         df_filtered = df_id_match
-        # PERBAIKAN DI SINI: Cara mengambil baris pertama koordinat DataFrame yang benar
+        # PERBAIKAN TOTAL DI SINI: Ditambahkan indeks numerik [0] agar membaca baris awal dengan benar
         map_center = [float(df_filtered.iloc[0]["lat"]), float(df_filtered.iloc[0]["long"])]
         map_zoom = 17  
         is_single_id_found = True
