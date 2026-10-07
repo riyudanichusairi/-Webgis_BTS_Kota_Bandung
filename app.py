@@ -140,7 +140,7 @@ batas_kota, df_all = load_and_process_data()
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    # FITUR BARU: Pencarian Berdasarkan ID Menara
+    # Pencarian Berdasarkan ID Menara
     search_id = st.text_input("Cari ID Menara:", placeholder="Contoh: 1, 2, atau 15...")
     
     st.markdown("<hr style='margin:10px 0; border-color:#334155;'>", unsafe_allow_html=True)
@@ -166,7 +166,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.6.0 (ID Search Added)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.6.5 (ILoc Syntax Fixed)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF (LOGIKA FILTER)
@@ -176,20 +176,18 @@ is_single_id_found = False
 map_center = [-6.9175, 107.6191]
 map_zoom = 12
 
-# Jika pengguna memasukkan ID Pencarian, prioritas dialihkan ke ID tersebut
+# Jika pengguna memasukkan ID Pencarian
 if search_id.strip():
     df_id_match = df_all[df_all["id"].str.strip() == search_id.strip()]
     if not df_id_match.empty:
         df_filtered = df_id_match
-        # Ubah titik tengah peta ke koordinat menara yang dicari
-        map_center = [df_filtered.iloc[0]["lat"], df_filtered.iloc[0]["long"]]
-        map_zoom = 17  # Otomatis zoom close-up ke lokasi menara
+        # PERBAIKAN DI SINI: Cara mengambil baris pertama koordinat DataFrame yang benar
+        map_center = [float(df_filtered.iloc[0]["lat"]), float(df_filtered.iloc[0]["long"])]
+        map_zoom = 17  
         is_single_id_found = True
     else:
-        # Jika ID tidak ditemukan, kosongkan data filter agar memicu st.warning
         df_filtered = pd.DataFrame(columns=df_all.columns)
 else:
-    # Jalankan filter drop-down standar jika kolom pencarian ID kosong
     if selected_kec != "Semua Kecamatan": 
         df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
 
@@ -210,4 +208,5 @@ st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi D
 
 m1, m2, m3, m4 = st.columns(4)
 with m1: st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
-with m2: st.metric("Cakupan Kecamatan", f"{df_filtered['nama_kecamatan'].nunique()}")
+with m2: st.metric("Cakupan Kecamatan", f"{df_filtered['nama_kecamatan'].nunique() if not df_filtered.empty else 0}")
+with m3: st.metric("Entitas Pemilik", f"{df_filtered['pemilik_menara'].nunique() if not df_filtered.empty else 0}")
