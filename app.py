@@ -206,7 +206,7 @@ components.html(html_map, height=550, scrolling=False)
 # ==========================================
 # 6. TABEL DATA TABULAR
 # ==========================================
-st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
+st.markdown("### 📊 Detail Data Tabular Menara")
 
 if df_filtered.empty:
     st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
