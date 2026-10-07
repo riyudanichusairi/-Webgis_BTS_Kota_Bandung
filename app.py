@@ -112,7 +112,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.8 (Indentation Fixed)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.9 (Scale Added)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
@@ -151,7 +151,8 @@ st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 # Wadah Peta terisolasi agar render Peta tidak mengganggu komponen di bawahnya
 map_container = st.container()
 with map_container:
-    m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap")
+    # Mengaktifkan fitur skala garis (control_scale=True) di pojok kiri bawah peta
+    m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
 
     if batas_kota:
         folium.GeoJson(
@@ -187,31 +188,4 @@ with map_container:
 
     # Key dinamis pada st_folium untuk mencegah pembekuan render komponen lain
     st_folium(m, width="100%", height=520, key=f"webgis_map_len_{len(df_filtered)}", returned_objects=[])
-
-# ==========================================
-# 6. TABEL DATA TABULAR (Sinkron & Dijamin Muncul)
-# ==========================================
-st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
-
-if not df_filtered.empty:
-    # Memilih kolom yang diperlukan saja (menghapus status izin, no izin, long, dan lat)
-    df_display = df_filtered[[
-        "id", "pemilik_menara", "struktur_tower", "tinggi_tower", "satuan",
-        "nama_kecamatan", "nama_desa_kelurahan", "lokasi_menara", "tahun"
-    ]].copy()
-    
-    # Mengubah nama kolom display menjadi lebih rapi dan bersih
-    df_display.columns = [
-        "ID", "Pemilik / Provider", "Jenis Struktur", "Tinggi", "Satuan",
-        "Kecamatan", "Kelurahan", "Alamat Lokasi", "Tahun Berdiri"
-    ]
-    
-    # Menampilkan tabel interaktif di bawah peta
-    st.dataframe(
-        df_display, 
-        use_container_width=True, 
-        hide_index=True
-    )
-else:
-    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
 
