@@ -113,7 +113,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.5 (Final Anti-Error)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.6 (Fixed Syntax Error)</div>", unsafe_allow_html=True)
 
 # ==========================================
 # PROSES PENJARINGAN DATA AKTIF
@@ -199,11 +199,10 @@ html_map = m._repr_html_()
 components.html(html_map, height=520, scrolling=True)
 
 # ==========================================
-# 6. TABEL DATA TABULAR (Struktur Tanpa Else Cabang - Antiputus)
+# 6. TABEL DATA TABULAR
 # ==========================================
 st.markdown("### 📊 Detail Data Tabular Menara Terfilter")
 
-# Menggunakan pengondisian tunggal yang bersih untuk menghindari kesalahan indentasi compiler
 if df_filtered.empty:
     st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
 
@@ -213,5 +212,9 @@ if not df_filtered.empty:
         "nama_kecamatan", "nama_desa_kelurahan", "lokasi_menara", "tahun"
     ]].copy()
     
+    # DI SINI PERBAIKANNYA: Tanda kurung siku tutup ']' sekarang dipastikan ada dan valid
     df_display.columns = [
         "ID", "Pemilik / Provider", "Jenis Struktur", "Tinggi", "Satuan",
+        "Kecamatan", "Kelurahan", "Alamat Lokasi", "Tahun Berdiri"
+    ]
+    
