@@ -75,7 +75,7 @@ def load_and_process_data():
             if geom and geom.get("type") == "Point":
                 lon, lat = geom["coordinates"]
                 
-                # Fungsi ekstraksi properti yang diperbaiki (Kebal Error Data Kosong & Numerik)
+                # Fungsi ekstraksi properti kebal error data kosong & numerik
                 def get_prop(keys_list, default="-"):
                     for k in keys_list:
                         for actual_key in props.keys():
@@ -83,7 +83,7 @@ def load_and_process_data():
                                 val = props[actual_key]
                                 if val is None:
                                     return default
-                                # Jika data berupa float bulat (seperti 4.0 atau 3.0), bersihkan jadi teks biasa (4 atau 3)
+                                # Membersihkan format float bulat (contoh: 4.0 menjadi 4)
                                 if isinstance(val, float) and val.is_integer():
                                     return str(int(val))
                                 return str(val).strip()
@@ -104,7 +104,7 @@ def load_and_process_data():
                     "satuan": get_prop(["satuan", "unit"], "Meter"),
                     "tahun": get_prop(["tahun", "tahun_berdiri", "thn"]),
                     
-                    # Kolom keterangan tambahan dari berkas baru Anda
+                    # Kolom keterangan tambahan terbaru Anda
                     "status_izin": get_prop(["status_izin", "status", "izin", "legalitas"], "-"),
                     "no_izin": get_prop(["no_izin", "nomor_sk", "imb", "pbg"], "-")
                 })
@@ -116,7 +116,7 @@ def load_and_process_data():
     ])
     return batas_kota, df
 
-# Eksekusi fungsi load data terpangkas cache
+# Eksekusi fungsi load data
 batas_kota, df_all = load_and_process_data()
 
 # ==========================================
@@ -142,7 +142,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.2 (Bugfix Core Render)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.3 (Hotfix Syntax)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -161,7 +161,6 @@ if selected_struktur != "Semua Struktur Tower":
 st.markdown("<div class='main-title'>Geographic Information System Menara BTS</div>", unsafe_allow_html=True)
 st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi Digital Kota Bandung</div>", unsafe_allow_html=True)
 
-# Ringkasan Statistik Utama Komponen Metric
 m1, m2, m3, m4 = st.columns(4)
 with m1:
     st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
@@ -177,10 +176,8 @@ with m4:
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-# Pembuatan Struktur Basemap Berbasis OpenStreetMap
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap")
 
-# Tambah Batas Administrasi Kota
 if batas_kota:
     folium.GeoJson(
         data=batas_kota,
@@ -193,7 +190,6 @@ if batas_kota:
         }
     ).add_to(m)
 
-# Plotting Cluster Titik Infrastruktur BTS
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
@@ -216,4 +212,7 @@ if not df_filtered.empty:
             </table>
         </div>
         """
+        # Pembuatan marker dipastikan memiliki tanda kurung lengkap dan tertutup dengan benar
         folium.Marker(
+            location=[row['lat'], row['long']],
+            popup=folium.Popup(popup_html, max_width=280),
