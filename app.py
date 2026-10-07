@@ -4,111 +4,108 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 import json
 import pandas as pd
-import plotly.express as px  # Ditambahkan untuk visualisasi grafik batang komparatif
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN & STYLE CSS
 # ==========================================
 st.set_page_config(
-    page_title="WebGIS Penduduk Lamongan 2024",
+    page_title="Aplikasi GIS Menara Telekomunikasi",
     layout="wide",
-    initial_sidebar_state="expanded"  # Dibuat expanded agar sidebar panduan terlihat
+    initial_sidebar_state="collapsed"
 )
 
-# Custom CSS disesuaikan untuk nuansa bersih, modern, dan rapi sesuai gambar
 st.markdown("""
     <style>
-    .main { background-color: #f8fafc; }
+    .main { background-color: #f4f6f9; }
     
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         background-color: #ffffff;
-        border-right: 1px solid #e2e8f0;
+        padding: 15px 30px;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    
-    .sidebar-logo-container {
-        text-align: center;
-        padding: 20px 10px;
-    }
-    .sidebar-title {
+    .header-left h1 {
         font-family: 'Helvetica Neue', Arial, sans-serif;
-        font-size: 18px;
-        font-weight: 700;
-        color: #1e293b;
-        margin-top: 10px;
-        line-height: 1.3;
-    }
-    .sidebar-desc {
-        font-size: 11px;
-        color: #64748b;
-        margin-top: 8px;
-        text-align: justify;
-    }
-    
-    /* Section & Card Styling */
-    .section-title {
-        font-family: Arial, sans-serif;
-        font-size: 15px;
+        font-size: 24px;
         font-weight: 700;
         color: #334155;
-        margin-top: 25px;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        margin: 0;
+    }
+    .header-right {
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        color: #64748b;
+        text-align: right;
+        line-height: 1.4;
+    }
+    
+    .map-card {
+        background-color: #ffffff;
+        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .map-card-header {
+        background-color: #1e3a8a;
+        color: #ffffff;
+        padding: 10px 15px;
+        font-weight: bold;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-top-left-radius: 3px;
+        border-top-right-radius: 3px;
+    }
+    .map-card-body {
+        padding: 0px;
     }
     
     .filter-card {
         background-color: #ffffff;
         padding: 15px;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        margin-bottom: 15px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
-    /* Content Card */
-    .bg-white-card {
+    .table-section-title {
         background-color: #ffffff;
-        padding: 15px;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        height: 100%;
+        padding: 12px 15px;
+        font-weight: bold;
+        font-size: 14px;
+        color: #1e293b;
+        border: 1px solid #cbd5e1;
+        border-bottom: none;
+        text-transform: uppercase;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        margin-top: 25px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. KOMPONEN SIDEBAR (NAVIGASI & PANDUAN)
+# 2. KOMPONEN HEADER ATAS
 # ==========================================
-with st.sidebar:
-    st.markdown("""
-        <div class="sidebar-logo-container">
-            <img src="https://wikimedia.org" width="80">
-            <div class="sidebar-title">WebGIS Penduduk<br>Lamongan 2024</div>
-            <div class="sidebar-desc">
-                Aplikasi Dashboard Geospatial Interaktif untuk visualisasi dan analisis data kependudukan tingkat Desa/Kelurahan di wilayah Kabupaten Lamongan, Provinsi Jawa Timur.
-            </div>
+st.markdown("""
+    <div class="header-container">
+        <div class="header-left">
+            <h1>Aplikasi GIS <span style="font-size:14px; font-weight:normal; color:#64748b;">(Geographic Information System)</span></h1>
+            <div style="font-size: 18px; font-weight: 600; color: #1e3a8a; margin-top:2px;">Menara Telekomunikasi Kota Bandung <span style="font-size:12px; font-weight:normal; color:#64748b;">(Ver. 1.0)</span></div>
         </div>
-        <hr style="margin: 10px 0; border-color: #e2e8f0;">
-        <div style="font-size: 12px; font-weight: bold; color: #dc2626; margin-bottom: 5px;">📍 Panduan Penggunaan:</div>
-        <div style="font-size: 11px; color: #475569; line-height: 1.5;">
-            1. Gunakan panel filter di bawah untuk menyaring data berdasarkan 'Kecamatan' atau 'Desa/Kelurahan'.<br><br>
-            2. Peta akan otomatis melakukan ZOOM ke area wilayah terfilter secara real-time.<br><br>
-            3. Ringkasan Kependudukan, Grafik, dan Tabel akan berubah secara otomatis.<br><br>
-            4. Arahkan kursor (hover) pada peta untuk melihat detail demografi desa.
+        <div class="header-right">
+            🏢 Dinas Komunikasi dan Informatika Kota Bandung<br>
+            📍 Balai Kota, Jl. Wastukencana No. 2, Telp./Fax. (022) 4232338
         </div>
-        <hr style="margin: 20px 0; border-color: #e2e8f0;">
-        <div style="font-size: 11px; font-weight: bold; color: #475569;">📊 Data Aktif:</div>
+    </div>
     """, unsafe_allow_html=True)
-    
-    # Tombol unduh diletakkan di bagian bawah sidebar
-    st.download_button(
-        label="💾 Unduh Data Terfilter (.CSV)",
-        data="",
-        file_name="data_penduduk_lamongan_filtered.csv",
-        mime="text/csv",
-        use_container_width=True
-    )
 
 # ==========================================
 # 3. FUNGSI LOAD DATA & PRE-PROCESSING
@@ -120,139 +117,141 @@ def load_geojson(file_path):
     except Exception:
         return None
 
-# Silakan sesuaikan nama file GeoJSON kependudukan Kabupaten Lamongan Anda
-batas_desa = load_geojson("batas_desa_lamongan.geojson") 
+batas_kota = load_geojson("batas_kota_bandung.geojson")
+data_bts = load_geojson("BTS_kota_bandung.geojson")
 
-# PERBAIKAN UTAMA: Mengisi nilai array integer/list secara eksplisit dan lengkap tanpa syntax error
-raw_data = {
-    "No":,
-    "Kecamatan": ["Paciran", "Brondong", "Brondong", "Mantup", "Tikung", "Sukodadi", "Paciran", "Modo"],
-    "Desa/Kelurahan": ["Sendangagung", "Brengkok", "Sendangharjo", "Mantup", "Tambakrigadung", "Sukodadi", "Kranji", "Mojorejo"],
-    "Jumlah Penduduk":,
-    "Laki-laki":,
-    "Perempuan":,
-    "lat": [-6.8837, -6.9012, -6.8950, -7.2415, -7.1622, -7.0985, -6.8722, -7.2110],
-    "long": [112.3551, 112.2745, 112.3121, 112.4510, 112.4312, 112.3315, 112.3611, 112.1812]
-}
-df_all = pd.DataFrame(raw_data)
+raw_rows = []
+if data_bts:
+    for idx, feature in enumerate(data_bts["features"], start=1):
+        geom = feature["geometry"]
+        props = feature["properties"]
+        
+        if geom["type"] == "Point":
+            lon, lat = geom["coordinates"]
+            
+            def get_prop(keys_list, default="-"):
+                for k in keys_list:
+                    for actual_key in props.keys():
+                        if actual_key.lower().strip() == k.lower().strip():
+                            val = props[actual_key]
+                            return str(val).strip() if val is not None else default
+                return default
+
+            raw_rows.append({
+                "id": get_prop(["id", "objectid", "no"], str(idx)),
+                "nama_provinsi": get_prop(["nama_provinsi", "provinsi", "prov"], "JAWA BARAT"),
+                "nama_kabupaten_kota": get_prop(["nama_kabupaten_kota", "kabupaten", "kota"], "KOTA BANDUNG"),
+                "nama_kecamatan": get_prop(["nama_kecamatan", "kecamatan", "kec"]),
+                "nama_desa_kelurahan": get_prop(["nama_desa_kelurahan", "kelurahan", "desa", "kel"]),
+                "pemilik_menara": get_prop(["pemilik_menara", "pemilik", "provider", "operator", "site_name", "nama"]),
+                "lokasi_menara": get_prop(["lokasi_menara", "lokasi", "alamat"]),
+                "long": lon,
+                "lat": lat,
+                "struktur_tower": get_prop(["struktur_tower", "struktur", "tipe", "type"]),
+                "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"]),
+                "satuan": get_prop(["satuan", "unit"], "Meter"),
+                "tahun": get_prop(["tahun", "tahun_berdiri", "thn"])
+            })
+
+df_all = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
+    "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
+    "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", "satuan", "tahun"
+])
 
 # ==========================================
-# 4. DASBOR DATA PENYARINGAN (FILTER)
+# 4. PANEL FILTER DATA
 # ==========================================
-st.markdown('<div class="section-title">🔍 Dasbor Data Penyaringan</div>', unsafe_allow_html=True)
+st.markdown('<div class="table-section-title">🔍 FILTER DATA MENARA</div>', unsafe_allow_html=True)
 
 with st.container():
     st.markdown('<div class="filter-card">', unsafe_allow_html=True)
+    col1, col2, col3, col4 = st.columns(4)
     
-    # Pilihan Langkah 1: Filter Kecamatan
-    list_kec = ["--Semua Kecamatan--"] + sorted(list(df_all["Kecamatan"].unique()))
-    selected_kec = st.selectbox("📍 Langkah 1: Filter Berdasarkan Kecamatan (Opsional)", list_kec)
-    
-    # Pilihan Langkah 2: Filter Desa/Kelurahan
-    if selected_kec != "--Semua Kecamatan--":
-        df_filtered_kec = df_all[df_all["Kecamatan"] == selected_kec]
-        list_des = ["--Semua Desa/Kelurahan--"] + sorted(list(df_filtered_kec["Desa/Kelurahan"].unique()))
-    else:
-        list_des = ["--Semua Desa/Kelurahan--"] + sorted(list(df_all["Desa/Kelurahan"].unique()))
+    with col1:
+        list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
+        selected_kec = st.selectbox("Nama Kecamatan:", list_kec)
         
-    selected_des = st.selectbox("📍 Langkah 2: Pilih Beberapa Desa/Kelurahan:", list_des)
+    with col2:
+        if selected_kec != "Semua Kecamatan":
+            df_filtered_kec = df_all[df_all["nama_kecamatan"] == selected_kec]
+            list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_filtered_kec["nama_desa_kelurahan"].unique() if x != "-"])
+        else:
+            list_kel = ["Semua Desa/Kelurahan"] + sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
+        selected_kel = st.selectbox("Nama Desa/Kelurahan:", list_kel)
+        
+    with col3:
+        list_pemilik = ["Semua Pemilik Menara"] + sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
+        selected_pemilik = st.selectbox("Pemilik Menara:", list_pemilik)
+        
+    with col4:
+        list_struktur = ["Semua Struktur Tower"] + sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
+        selected_struktur = st.selectbox("Struktur Tower:", list_struktur)
+        
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Eksekusi Filter
+# Eksekusi Operasi Penjaringan Data
 df_filtered = df_all.copy()
-if selected_kec != "--Semua Kecamatan--":
-    df_filtered = df_filtered[df_filtered["Kecamatan"] == selected_kec]
-if selected_des != "--Semua Desa/Kelurahan--":
-    df_filtered = df_filtered[df_filtered["Desa/Kelurahan"] == selected_des]
+if selected_kec != "Semua Kecamatan":
+    df_filtered = df_filtered[df_filtered["nama_kecamatan"] == selected_kec]
+if selected_kel != "Semua Desa/Kelurahan":
+    df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"] == selected_kel]
+if selected_pemilik != "Semua Pemilik Menara":
+    df_filtered = df_filtered[df_filtered["pemilik_menara"] == selected_pemilik]
+if selected_struktur != "Semua Struktur Tower":
+    df_filtered = df_filtered[df_filtered["struktur_tower"] == selected_struktur]
+
 
 # ==========================================
-# 5. RINGKASAN DATA KONTEN (METRIK)
+# 5. PANEL PETA INTERAKTIF 
 # ==========================================
-st.markdown('<div class="section-title">📊 Ringkasan Data Konten</div>', unsafe_allow_html=True)
+st.markdown('<div class="map-card"><div class="map-card-header">🗺️ PETA MENARA TELEKOMUNIKASI</div><div class="map-card-body">', unsafe_allow_html=True)
 
-total_penduduk = df_filtered["Jumlah Penduduk"].sum()
-total_lk = df_filtered["Laki-laki"].sum()
-total_pr = df_filtered["Perempuan"].sum()
-total_wilayah = df_filtered["Desa/Kelurahan"].nunique() if not df_filtered.empty else 0
+m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="OpenStreetMap")
 
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.metric(label="Jumlah Penduduk Total", value=f"{total_penduduk:,} Jiwa".replace(",", "."))
-with col2:
-    st.metric(label="Laki-laki", value=f"{total_lk:,} Jiwa".replace(",", "."))
-with col3:
-    st.metric(label="Perempuan", value=f"{total_pr:,} Jiwa".replace(",", "."))
-with col4:
-    st.metric(label="Jumlah Wilayah (Desa)", value=f"{total_wilayah} Wilayah")
-
-# ==========================================
-# 6. ANALISIS DAN DETAIL DATA TERFILTER (TABEL & GRAFIK)
-# ==========================================
-st.markdown('<div class="section-title">📉 Analisis dan Detail Data Terfilter</div>', unsafe_allow_html=True)
-
-col_tabel, col_grafik = st.columns(2)
-
-with col_tabel:
-    st.markdown('<div class="bg-white-card"><b>📋 Tabel Detail Penduduk per Desa</b><br><br>', unsafe_allow_html=True)
-    df_table_show = df_filtered[["No", "Kecamatan", "Desa/Kelurahan", "Jumlah Penduduk", "Laki-laki", "Perempuan"]]
-    st.dataframe(df_table_show, use_container_width=True, hide_index=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col_grafik:
-    st.markdown('<div class="bg-white-card"><b>📊 Grafik Perbandingan Populasi Desa</b><br><br>', unsafe_allow_html=True)
-    if not df_filtered.empty:
-        df_melted = df_filtered.melt(
-            id_vars=["Desa/Kelurahan"], 
-            value_vars=["Laki-laki", "Perempuan"],
-            var_name="Jenis Kelamin", 
-            value_name="Populasi"
-        )
-        
-        fig = px.bar(
-            df_melted, 
-            x="Desa/Kelurahan", 
-            y="Populasi", 
-            color="Jenis Kelamin",
-            barmode="group",
-            color_discrete_map={"Laki-laki": "#1e40af", "Perempuan": "#38bdf8"},
-            height=300
-        )
-        fig.update_layout(
-            margin=dict(l=20, r=20, t=10, b=20),
-            xaxis_title=None,
-            yaxis_title=None,
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Tidak ada data untuk ditampilkan grafiknya.")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ==========================================
-# 7. PANEL PETA INTERAKTIF KLOROPLET
-# ==========================================
-st.markdown('<div class="section-title">🗺️ Peta Interaktif Kloroplet Desa</div>', unsafe_allow_html=True)
-
-map_center = [-7.1283, 112.3148]
-zoom_lv = 11
-
-if selected_des != "--Semua Desa/Kelurahan--" and not df_filtered.empty:
-    map_center = [df_filtered.iloc[0]['lat'], df_filtered.iloc[0]['long']]
-    zoom_lv = 14
-elif selected_kec != "--Semua Kecamatan--" and not df_filtered.empty:
-    map_center = [df_filtered['lat'].mean(), df_filtered['long'].mean()]
-    zoom_lv = 12
-
-m = folium.Map(location=map_center, zoom_start=zoom_lv, tiles="OpenStreetMap")
-
-if batas_desa:
+if batas_kota:
     folium.GeoJson(
-        data=batas_desa,
+        data=batas_kota,
         style_function=lambda feature: {
-            "fillColor": "#0284c7",
-            "color": "#0369a1",
-            "weight": 1.5,
-            "fillOpacity": 0.2,
+            "fillColor": "#22c55e",
+            "color": "#16a34a",
+            "weight": 2,
+            "fillOpacity": 0.08,
         }
     ).add_to(m)
 
+if not df_filtered.empty:
+    marker_cluster = MarkerCluster(
+        options={'maxClusterRadius': 40, 'disableClusteringAtZoom': 14}
+    ).add_to(m)
+    
+    for _, row in df_filtered.iterrows():
+        popup_html = f"""
+        <div style='font-family:Arial; font-size:12px; width:220px;'>
+            <b>Detail Menara BTS</b><hr style='margin:4px 0;'>
+            <b>Pemilik:</b> {row['pemilik_menara']}<br>
+            <b>Kecamatan:</b> {row['nama_kecamatan']}<br>
+            <b>Kelurahan:</b> {row['nama_desa_kelurahan']}<br>
+            <b>Struktur:</b> {row['struktur_tower']}<br>
+            <b>Tinggi:</b> {row['tinggi_tower']} {row['satuan']}<br>
+            <b>Tahun:</b> {row['tahun']}<br>
+            <hr style='margin:4px 0;'>
+            <b>Lat:</b> {row['lat']}<br><b>Long:</b> {row['long']}
+        </div>
+        """
+        folium.Marker(
+            location=[row['lat'], row['long']],
+            popup=folium.Popup(popup_html, max_width=250),
+            icon=folium.Icon(color="red", icon="signal", prefix="fa")
+        ).add_to(marker_cluster)
+
+st_folium(m, width="100%", height=480, key="webgis_map", returned_objects=[])
+st.markdown('</div></div>', unsafe_allow_html=True)
+
+
+# ==========================================
+# 6. PANEL TABEL DATA TABULAR
+# ==========================================
+st.markdown('<div class="table-section-title">📊 DATA MENARA TELEKOMUNIKASI</div>', unsafe_allow_html=True)
+
+# Memasang fungsi render langsung tanpa percabangan agar tidak ada risiko celah spasi
+st.dataframe(df_filtered, use_container_width=True, hide_index=True)
