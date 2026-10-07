@@ -141,7 +141,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur, key=f"strk_{st.session_state.filter_key}")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.4 (Stable Graphs)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.5 (Production Build)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -222,7 +222,7 @@ if not df_filtered.empty:
 st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
 
 # ==========================================
-# 7. ANALISIS GRAFIK STATISTIK (DIPERBAIKI)
+# 7. ANALISIS GRAFIK STATISTIK
 # ==========================================
 st.markdown("### 📈 Ringkasan Grafik Analitik")
 c1, c2 = st.columns(2)
@@ -230,4 +230,4 @@ c1, c2 = st.columns(2)
 with c1:
     st.write("**Top 10 Pemilik Menara Terbanyak**")
     if not df_filtered.empty:
-        # Konversi value_counts menjadi DataFrame yang valid agar sumbu terbaca eksplisit oleh Streamlit
+        df_chart_pemilik = df_filtered["pemilik_menara"].value_counts().head(10).reset_index()
