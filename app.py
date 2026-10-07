@@ -131,7 +131,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.0 (Google Maps Update)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.1 (Fixed Version)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
