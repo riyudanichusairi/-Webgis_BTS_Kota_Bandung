@@ -99,13 +99,12 @@ def load_and_process_data():
     if raw_rows:
         df = pd.DataFrame(raw_rows)
         
-        # Menggunakan regex replace standar untuk menghapus .0 di akhir string angka secara aman
-        df["id"] = df["id"].astype(str).str.replace(r"\.0$", "", regex=True)
-        df["struktur_tower"] = df["struktur_tower"].astype(str).str.replace(r"\.0$", "", regex=True)
-        df["tahun"] = df["tahun"].astype(str).str.replace(r"\.0$", "", regex=True)
-        
-        # Konversi kolom tinggi menjadi teks angka bulat utuh tanpa pecahan desimal
-        df["tinggi_tower"] = pd.to_numeric(df["tinggi_tower"], errors='coerce').fillna(0).astype(int).astype(str)
+        # Pembersihan ekor .0 yang aman dengan mengubah nilai float ke string tanpa regex aneh
+        for col in ["id", "struktur_tower", "tahun"]:
+            df[col] = df[col].astype(str).apply(lambda x: x[:-2] if x.endswith('.0') else x)
+            
+        # Pembersihan kolom tinggi menara menjadi angka bulat string murni
+        df["tinggi_tower"] = df["tinggi_tower"].astype(str).apply(lambda x: x[:-2] if x.endswith('.0') else x)
     else:
         df = pd.DataFrame(columns=[
             "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
@@ -152,7 +151,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur, key=f"strk_{st.session_state.filter_key}")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.4 (Stable Hotfix)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.5 (Final Stable Build)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -214,15 +213,16 @@ if not df_filtered.empty:
         <div style='font-family: "Segoe UI", Arial; font-size:12px; width:240px; color:#334155;'>
             <h4 style='margin:0 0 6px 0; color:#1e3a8a; font-size:13px;'>Detail Menara BTS</h4>
             <table style='width:100%; border-collapse: collapse;'>
-                <tr><td><b>Pemilik</b></td><td>: {row['pemilik_menara']}</td></tr>
-                <tr><td><b>Kecamatan</b></td><td>: {row['nama_kecamatan']}</td></tr>
-                <tr><td><b>Kelurahan</b></td><td>: {row['nama_desa_kelurahan']}</td></tr>
-                <tr><td><b>Struktur</b></td><td>: {row['struktur_tower']}</td></tr>
-                <tr><td><b>Dimensi</b></td><td>: {row['tinggi_tower']} {row['satuan']}</td></tr>
-                <tr><td><b>Tahun</b></td><td>: {row['tahun']}</td></tr>
+                <tr><td><b>Pemilik</b></td><td>: {str(row['pemilik_menara'])}</td></tr>
+                <tr><td><b>Kecamatan</b></td><td>: {str(row['nama_kecamatan'])}</td></tr>
+                <tr><td><b>Kelurahan</b></td><td>: {str(row['nama_desa_kelurahan'])}</td></tr>
+                <tr><td><b>Struktur</b></td><td>: {str(row['struktur_tower'])}</td></tr>
+                <tr><td><b>Dimensi</b></td><td>: {str(row['tinggi_tower'])} {str(row['satuan'])}</td></tr>
+                <tr><td><b>Tahun</b></td><td>: {str(row['tahun'])}</td></tr>
             </table>
         </div>
         """
         folium.Marker(
-            location=[row['lat'], row['long']],
+            location=[float(row['lat']), float(row['long'])],
             popup=folium.Popup(popup_html, max_width=280),
+            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
