@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Modern Minimalis
+# Custom CSS Modern Minialis
 st.markdown("""
     <style>
     [data-testid="stSidebar"] {
@@ -39,6 +39,14 @@ st.markdown("""
         font-size: 14px;
         margin-bottom: 25px;
     }
+    .card-container {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -47,6 +55,7 @@ st.markdown("""
 # ==========================================
 @st.cache_data(show_spinner="Memuat data spasial...")
 def load_and_process_data():
+    # Fungsi pembacaan GeoJSON aman
     def read_json(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -96,13 +105,14 @@ def load_and_process_data():
     ])
     return batas_kota, df
 
+# Eksekusi fungsi load data terpangkas cache
 batas_kota, df_all = load_and_process_data()
 
 # ==========================================
 # 3. CONTROL PANEL (SIDEBAR FILTER)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:10px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
@@ -121,16 +131,7 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    st.markdown("<h4 style='color:#f8fafc; font-size:14px; font-weight:600; margin-bottom:5px;'>🗺️ Tampilan Peta</h4>", unsafe_allow_html=True)
-    basemap_options = {
-        "OpenStreetMap (Standar)": "openstreetmap",
-        "CartoDB Positron (Terang)": "cartodbpositron",
-        "CartoDB Dark Matter (Gelap)": "cartodbdarkmatter"
-    }
-    selected_basemap = st.selectbox("Pilih Peta Dasar:", list(basemap_options.keys()))
-    
-    st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.4.1 (No-Plotly Stable)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.2.0 (Optimized Version)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -149,6 +150,7 @@ if selected_struktur != "Semua Struktur Tower":
 st.markdown("<div class='main-title'>Geographic Information System Menara BTS</div>", unsafe_allow_html=True)
 st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi Digital Kota Bandung</div>", unsafe_allow_html=True)
 
+# Ringkasan Statistik Utama Komponen Metric
 m1, m2, m3, m4 = st.columns(4)
 with m1:
     st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
@@ -164,8 +166,10 @@ with m4:
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles=basemap_options[selected_basemap])
+# Pembuatan Struktur Basemap Berbasis OpenStreetMap Gratis Tanpa API Key
+m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap")
 
+# Tambah Batas Administrasi Kota
 if batas_kota:
     folium.GeoJson(
         data=batas_kota,
@@ -178,21 +182,11 @@ if batas_kota:
         }
     ).add_to(m)
 
-def get_marker_color(struktur):
-    str_lower = str(struktur).lower()
-    if "monopole" in str_lower:
-        return "green"
-    elif "sst" in str_lower or "3 leg" in str_lower or "4 leg" in str_lower:
-        return "red"
-    elif "pole" in str_lower or "microcell" in str_lower:
-        return "orange"
-    else:
-        return "blue"
-
-if df_filtered.empty:
-    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter Anda saat ini.")
-else:
-    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
+# Plotting Cluster Titik Infrastruktur BTS
+if not df_filtered.empty:
+    marker_cluster = MarkerCluster(
+        options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
+    ).add_to(m)
     
     for _, row in df_filtered.iterrows():
         popup_html = f"""
@@ -211,21 +205,27 @@ else:
         folium.Marker(
             location=[row['lat'], row['long']],
             popup=folium.Popup(popup_html, max_width=280),
-            icon=folium.Icon(color=get_marker_color(row['struktur_tower']), icon="tower-broadcast", prefix="fa")
+            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
-        
-    st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
+
+# Tampilkan Peta ke Streamlit dengan Penyetelan Tanpa Reload Aksi Objek Balikan
+st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
 
 # ==========================================
-# 6. VISUALISASI GRAFIK ANALISIS (MENGGUNAKAN GRAFIK BAWAAN STREAMLIT)
+# 6. TABEL DATA TABULAR & VALIDASI OUTPUT
 # ==========================================
-if not df_filtered.empty:
-    st.markdown("### 📊 Analisis & Statistik Infrastruktur")
-    c1, c2 = st.columns(2)
-    
-    with c1:
-        st.markdown("**Top 5 Pemilik Menara Terbanyak**")
-        top_pemilik = df_filtered['pemilik_menara'].value_counts().head(5)
-        st.bar_chart(top_pemilik)
-        
-    with c2:
+st.markdown("### 📊 Dataset Atribut Menara")
+st.dataframe(
+    df_filtered, 
+    use_container_width=True, 
+    hide_index=True,
+    column_config={
+        "pemilik_menara": "Nama Pemilik",
+        "nama_kecamatan": "Kecamatan",
+        "nama_desa_kelurahan": "Kelurahan",
+        "struktur_tower": "Tipe Menara",
+        "tinggi_tower": "Tinggi",
+        "long": "Bujur (X)",
+        "lat": "Lintang (Y)"
+    }
+)
