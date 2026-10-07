@@ -56,7 +56,6 @@ st.markdown("""
 # ==========================================
 @st.cache_data(show_spinner="Memuat data spasial...")
 def load_and_process_data():
-    # Fungsi pembacaan GeoJSON aman
     def read_json(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -106,7 +105,6 @@ def load_and_process_data():
     ])
     return batas_kota, df
 
-# Eksekusi fungsi load data terpangkas cache
 batas_kota, df_all = load_and_process_data()
 
 # ==========================================
@@ -115,7 +113,6 @@ batas_kota, df_all = load_and_process_data()
 with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:10px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    # Filter Wilayah & Atribut
     list_kec = ["Semua Kecamatan"] + sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.selectbox("Wilayah Kecamatan:", list_kec)
     
@@ -133,7 +130,6 @@ with st.sidebar:
     selected_struktur = st.selectbox("Jenis Struktur:", list_struktur)
     
     st.markdown("---")
-    # FITUR 1: Pengaturan Basemap Dinamis
     st.markdown("<h4 style='color:#f8fafc; font-size:14px; font-weight:600; margin-bottom:5px;'>🗺️ Tampilan Peta</h4>", unsafe_allow_html=True)
     basemap_options = {
         "OpenStreetMap (Standar)": "openstreetmap",
@@ -143,7 +139,7 @@ with st.sidebar:
     selected_basemap = st.selectbox("Pilih Peta Dasar:", list(basemap_options.keys()))
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.0 (Features Upgraded)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.3.1 (Fixed Error)</div>", unsafe_allow_html=True)
 
 # Proses Penjaringan Data Spasial Aktif
 df_filtered = df_all.copy()
@@ -162,7 +158,6 @@ if selected_struktur != "Semua Struktur Tower":
 st.markdown("<div class='main-title'>Geographic Information System Menara BTS</div>", unsafe_allow_html=True)
 st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Telekomunikasi Digital Kota Bandung</div>", unsafe_allow_html=True)
 
-# Ringkasan Statistik Utama Komponen Metric
 m1, m2, m3, m4 = st.columns(4)
 with m1:
     st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
@@ -178,10 +173,8 @@ with m4:
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Spasial Terintegrasi")
 
-# Pembuatan Struktur Basemap Berbasis Pilihan Pengguna di Sidebar
 m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles=basemap_options[selected_basemap])
 
-# Tambah Batas Administrasi Kota
 if batas_kota:
     folium.GeoJson(
         data=batas_kota,
@@ -194,7 +187,6 @@ if batas_kota:
         }
     ).add_to(m)
 
-# FITUR 2: Fungsi Pewarnaan Dinamis Berdasarkan Tipe Struktur Tower
 def get_marker_color(struktur):
     str_lower = str(struktur).lower()
     if "monopole" in str_lower:
@@ -206,7 +198,6 @@ def get_marker_color(struktur):
     else:
         return "blue"
 
-# FITUR 5: Proteksi data kosong (Defensive Coding)
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(
         options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}
@@ -226,7 +217,18 @@ if not df_filtered.empty:
             </table>
         </div>
         """
-        # Menerapkan pewarnaan dinamis pada marker
+        # DI SINI PERBAIKANNYA: Menambahkan kurung tutup ")" sebelum .add_to()
         folium.Marker(
             location=[row['lat'], row['long']],
             popup=folium.Popup(popup_html, max_width=280),
+            icon=folium.Icon(color=get_marker_color(row['struktur_tower']), icon="tower-broadcast", prefix="fa")
+        ).add_to(marker_cluster)
+        
+    st_folium(m, width="100%", height=520, key="webgis_map_prod", returned_objects=[])
+else:
+    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter Anda saat ini.")
+
+# ==========================================
+# 6. VISUALISASI GRAFIK ANALISIS
+# ==========================================
+if not df_filtered.empty:
