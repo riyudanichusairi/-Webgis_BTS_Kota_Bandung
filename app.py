@@ -224,8 +224,9 @@ ZOOM_AWAL = 12
 # Inisialisasi Peta dasar dengan koordinat Kota Bandung
 m = folium.Map(location=[LAT_AWAL, LONG_AWAL], zoom_start=ZOOM_AWAL, tiles="openstreetmap", control_scale=True)
 
+# --- MENUKAR POSISI: MEASURE CONTROL DIPINDAHKAN KE TOPRIGHT ---
 measure_control = MeasureControl(
-    position='topleft',
+    position='topright',
     primary_length_unit='meters',
     secondary_length_unit='kilometers',
     primary_area_unit='sqmeters',
@@ -261,7 +262,7 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# --- INJEKSI JAVASCRIPT DIRECT LEAFLET VIA ELEMENT MAP ---
+# --- TOMBOL KOTAK RESET TETAP DI TOPLEFT (DI BAWAH TOMBOL ZOOM) ---
 id_peta = m.get_name()
 
 custom_button_js = f"""
@@ -274,7 +275,6 @@ document.addEventListener("DOMContentLoaded", function() {{
         customControl.onAdd = function(map) {{
             var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
             
-            // MENGGUNAKAN IKON KOTAK FONT AWESOME AGAR RAPI DAN SERASI DENGAN BASE MAP
             div.innerHTML = '<i class="fa-regular fa-square" style="color: #333333;"></i>';
             
             div.style.backgroundColor = 'white';
