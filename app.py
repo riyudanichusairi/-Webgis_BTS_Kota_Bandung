@@ -143,24 +143,38 @@ with st.sidebar:
     
     st.markdown("<h2 style='color:#f8fafc; font-size:15px; font-weight:450; margin-bottom:15px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    list_id = sorted([x for x in df_all["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
-    selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
-    
-    list_kec = sorted([x for x in df_all["nama_kecamatan"].unique() if x != "-"])
+# --- INISIALISASI DATA FILTER BERTAHAP ---
+    df_filtered = df_all.copy()
+
+    # 1. FILTER KECAMATAN
+    list_kec = sorted([x for x in df_filtered["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.multiselect("Wilayah Kecamatan:", list_kec, placeholder="Pilih atau ketik Kecamatan...")
-    
     if selected_kec:
-        df_kec_filtered = df_all[df_all["nama_kecamatan"].isin(selected_kec)]
-        list_kel = sorted([x for x in df_kec_filtered["nama_desa_kelurahan"].unique() if x != "-"])
-    else:
-        list_kel = sorted([x for x in df_all["nama_desa_kelurahan"].unique() if x != "-"])
+        df_filtered = df_filtered[df_filtered["nama_kecamatan"].isin(selected_kec)]
+
+    # 2. FILTER KELURAHAN (Hanya muncul yang ada di Kecamatan terpilih)
+    list_kel = sorted([x for x in df_filtered["nama_desa_kelurahan"].unique() if x != "-"])
     selected_kel = st.multiselect("Wilayah Kelurahan:", list_kel, placeholder="Pilih atau ketik Kelurahan...")
-    
-    list_pemilik = sorted([x for x in df_all["pemilik_menara"].unique() if x != "-"])
+    if selected_kel:
+        df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"].isin(selected_kel)]
+
+    # 3. FILTER PROVIDER / PEMILIK (Hanya muncul yang ada di Wilayah terpilih)
+    list_pemilik = sorted([x for x in df_filtered["pemilik_menara"].unique() if x != "-"])
     selected_pemilik = st.multiselect("Provider / Pemilik:", list_pemilik, placeholder="Pilih atau ketik Provider...")
-    
-    list_struktur = sorted([x for x in df_all["struktur_tower"].unique() if x != "-"])
+    if selected_pemilik:
+        df_filtered = df_filtered[df_filtered["pemilik_menara"].isin(selected_pemilik)]
+
+    # 4. FILTER JENIS STRUKTUR (Hanya muncul yang sesuai dengan Kecamatan/Kelurahan/Provider terpilih)
+    list_struktur = sorted([x for x in df_filtered["struktur_tower"].unique() if x != "-"])
     selected_struktur = st.multiselect("Jenis Struktur:", list_struktur, placeholder="Pilih atau ketik Jenis Struktur...")
+    if selected_struktur:
+        df_filtered = df_filtered[df_filtered["struktur_tower"].isin(selected_struktur)]
+
+    # 5. FILTER ID MENARA (Pilihan paling spesifik di akhir)
+    list_id = sorted([x for x in df_filtered["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
+    selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
+    if selected_id:
+        df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
     
     st.markdown("---")
     st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.5.1 (Map Render Fixed)</div>", unsafe_allow_html=True)
