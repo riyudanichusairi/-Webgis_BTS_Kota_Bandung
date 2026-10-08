@@ -261,17 +261,25 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# --- FITUR BARU: TOMBOL RESET POSISI AWAL (DI BAWAH KONTROL ZOOM) ---
-custom_button_js = f"""
-<script>
-document.addEventListener("DOMContentLoaded", function() {{
-    setTimeout(function() {{
-        // Mencari objek map folium yang digenerate di window
-        var maps = Object.keys(window).filter(k => k.startsWith('map_'));
-        if (maps.length > 0) {{
-            var mapObj = window[maps[0]];
-            
-            // Membuat elemen kontainer tombol kustom bergaya Leaflet
+# --- PERBAIKAN UTAMA: MENYUNTIKKAN TOMBOL RESET LANGSUNG KE OBJEK MAP ---
+from branca.element import MacroElement, Element
+
+class HomeButton(MacroElement):
+    def __init__(self, lat, lon, zoom):
+        super(HomeButton, self).__init__()
+        self._name = 'HomeButton'
+        self.lat = lat
+        self.lon = lon
+        self.zoom = zoom
+
+    def render(self, **kwargs):
+        super(HomeButton, self).render(**kwargs)
+        
+        # Mengambil id template peta folium induk secara otomatis
+        id_peta = self._parent.get_name()
+        
+        # Menuliskan script HTML & JS Leaflet yang terikat langsung ke id peta
+        self.script.add_child(Element(f"""
             var customControl = L.control({{ position: 'topleft' }});
             
             customControl.onAdd = function(map) {{
@@ -283,25 +291,23 @@ document.addEventListener("DOMContentLoaded", function() {{
                 div.style.lineHeight = '34px';
                 div.style.textAlign = 'center';
                 div.style.cursor = 'pointer';
-                div.style.fontSize = '18px';
+                div.style.fontSize = '16px';
                 div.title = 'Kembali ke Posisi Awal';
                 
-                // Aksi mengembalikan peta ke posisi awal dan zoom-out semula saat diklik
                 div.onclick = function() {{
-                    mapObj.setView([{LAT_AWAL}, {LONG_AWAL}], {ZOOM_AWAL});
+                    {id_peta}.setView([{self.lat}, {self.lon}], {self.zoom});
                 }};
                 return div;
             }};
             
-            customControl.addTo(mapObj);
-        }}
-    }}, 1000); // Delay aman untuk memastikan objek map Leaflet sudah siap di DOM
-}});
-</script>
-"""
+            customControl.addTo({id_peta});
+        """))
+
+# Daftarkan elemen tombol baru ke dalam objek peta
+m.add_child(HomeButton(LAT_AWAL, LONG_AWAL, ZOOM_AWAL))
 
 # --- COMPILING DAN RENDER PETA ---
-html_map = m._repr_html_() + custom_button_js
+html_map = m._repr_html_()
 components.html(html_map, height=550, scrolling=False)
 
 
