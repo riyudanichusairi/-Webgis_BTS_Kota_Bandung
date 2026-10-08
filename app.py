@@ -221,11 +221,11 @@ LAT_AWAL = -6.9175
 LONG_AWAL = 107.6191
 ZOOM_AWAL = 12
 
-# Inisialisasi Peta dasar menggunakan CartoDB Positron (Ringan, Modern, & Anti-Blokir)
+# Inisialisasi Peta dasar menggunakan OpenStreetMap Resmi (100% Free, Tanpa Batas, & Bebas API Key)
 m = folium.Map(
     location=[LAT_AWAL, LONG_AWAL], 
     zoom_start=ZOOM_AWAL, 
-    tiles="CartoDB positron",
+    tiles="openstreetmap",
     control_scale=True
 )
 
