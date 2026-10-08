@@ -319,6 +319,8 @@ st.markdown("### 📊 Detail Data Tabular Menara")
 if df_filtered.empty:
     st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
 else:
-    # Menambahkan hide_index=True untuk menyembunyikan kolom indeks paling kiri
-    st.dataframe(df_filtered, use_container_width=True, hide_index=True)
-
+    # 1. Buat duplikat data khusus untuk tabel dan hapus kolom 'long' & 'lat'
+    df_tabel = df_filtered.drop(columns=["long", "lat"])
+    
+    # 2. Tampilkan DataFrame yang sudah bersih dari kolom koordinat
+    st.dataframe(df_tabel, use_container_width=True, hide_index=True)
