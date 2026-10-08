@@ -211,3 +211,9 @@ components.html(html_map, height=550, scrolling=False)
 # ==========================================
 st.markdown("### 📊 Detail Data Tabular Menara")
 
+if df_filtered.empty:
+    st.warning("⚠️ Tidak ada data menara yang sesuai dengan kombinasi filter kontrol spasial saat ini.")
+else:
+    # Menambahkan hide_index=True untuk menyembunyikan kolom indeks paling kiri
+    st.dataframe(df_filtered, use_container_width=True, hide_index=True)
+
