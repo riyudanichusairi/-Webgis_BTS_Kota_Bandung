@@ -221,16 +221,16 @@ LAT_AWAL = -6.9175
 LONG_AWAL = 107.6191
 ZOOM_AWAL = 12
 
-# Inisialisasi Peta dasar menggunakan Stadia Smooth Imagery
+# Inisialisasi Peta DASAR LANGSUNG menggunakan Esri World Imagery (Hapus TileLayer Stadia lama)
 m = folium.Map(
     location=[LAT_AWAL, LONG_AWAL], 
     zoom_start=ZOOM_AWAL, 
-    tiles="https://stadiamaps.com{z}/{x}/{y}.png",
-    attr="&copy; Stadia Maps &copy; OpenStreetMap",
+    tiles="https://arcgisonline.com{z}/{y}/{x}",
+    attr="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
     control_scale=True
 )
 
-# --- MENUKAR POSISI: MEASURE CONTROL DIPINDAHKAN KE TOPRIGHT ---
+# Menambahkan Measure Control ke pojok kanan atas
 measure_control = MeasureControl(
     position='topright',
     primary_length_unit='meters',
