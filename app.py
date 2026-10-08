@@ -259,7 +259,7 @@ if not df_filtered.empty:
             <b>Kecamatan:</b> {row['nama_kecamatan']}<br>
             <b>Struktur:</b> {row['struktur_tower']}<br>
             <b>Tinggi:</b> {row['tinggi_tower']} {row['satuan']}<br>
-            <b>Koordinat:</b> <a href="https://google.com{row['lat']},{row['long']}<br>
+            <b>Koordinat:</b> ({row['lat']}, {row['long']})
         </div>
         """
         folium.Marker(
