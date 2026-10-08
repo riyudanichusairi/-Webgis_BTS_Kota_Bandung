@@ -226,7 +226,7 @@ m = folium.Map(
     location=[LAT_AWAL, LONG_AWAL], 
     zoom_start=ZOOM_AWAL, 
     tiles="https://google.com{x}&y={y}&z={z}",
-    attr="Google Hybrid",
+    attr="Google Satellite",
     control_scale=True
 )
 
