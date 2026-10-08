@@ -221,12 +221,11 @@ LAT_AWAL = -6.9175
 LONG_AWAL = 107.6191
 ZOOM_AWAL = 12
 
-# Inisialisasi Peta DASAR LANGSUNG menggunakan Esri World Imagery (Hapus TileLayer Stadia lama)
+# Inisialisasi Peta dasar menggunakan CartoDB Positron (Ringan, Modern, & Anti-Blokir)
 m = folium.Map(
     location=[LAT_AWAL, LONG_AWAL], 
     zoom_start=ZOOM_AWAL, 
-    tiles="https://arcgisonline.com{z}/{y}/{x}",
-    attr="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
+    tiles="CartoDB positron",
     control_scale=True
 )
 
