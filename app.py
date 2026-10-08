@@ -16,17 +16,50 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Modern Minimalis
+# ==========================================
+# 1. KONFIGURASI HALAMAN & THEME GLOBAL
+# ==========================================
+st.set_page_config(
+    page_title="Dashboard WebGIS Menara Kota Bandung",
+    page_icon="🗺️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS Modern Minimalis - WARNA LATAR SIDEBAR DIUBAH MENJADI BIRU MUDA
 st.markdown("""
     <style>
-    [data-testid="stSidebar"] { background-color: #0f172a; color: #f8fafc; }
-    [data-testid="stSidebar"] .stSelectbox label, [data-testid="stSidebar"] .stMultiSelect label { color: #cbd5e1 !important; font-weight: 500; }
+    /* Mengubah latar belakang sidebar menjadi biru muda cerah (#a0c4ff) */
+    /* Serta mengubah warna tulisan utama menjadi abu gelap/hitam (#1e293b) agar terbaca */
+    [data-testid="stSidebar"] { 
+        background-color: #a0c4ff; 
+        color: #1e293b; 
+    }
+    
+    /* Menyesuaikan warna judul header cth: Kontrol Spasial */
+    [data-testid="stSidebar"] h2 {
+        color: #1e293b !important;
+    }
+    
+    /* Menyesuaikan warna label teks multiselect/selectbox di atas kolom input */
+    [data-testid="stSidebar"] .stSelectbox label, 
+    [data-testid="stSidebar"] .stMultiSelect label { 
+        color: #0f172a !important; 
+        font-weight: 600; 
+    }
+    
+    /* Menyesuaikan teks info/footer di bagian paling bawah sidebar agar tidak samar */
+    [data-testid="stSidebar"] div[style*="font-size:11px"] {
+        color: #334155 !important;
+        font-weight: 500;
+    }
+    
     .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
     .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
-    /* Memastikan kontainer iframe peta memiliki ruang pembungkus */
     iframe { border: none; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
     </style>
     """, unsafe_allow_html=True)
+
 
 # ==========================================
 # 2. CACHING DATA (MEMBUAT APLIKASI RINGAN)
