@@ -261,8 +261,7 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# --- SOLUSI AMAN: INJEKSI JAVASCRIPT DIRECT LEAFLET VIA ELEMENT MAP ---
-# Mendapatkan nama variabel peta otomatis dari Folium
+# --- INJEKSI JAVASCRIPT DIRECT LEAFLET VIA ELEMENT MAP ---
 id_peta = m.get_name()
 
 custom_button_js = f"""
@@ -274,14 +273,17 @@ document.addEventListener("DOMContentLoaded", function() {{
         
         customControl.onAdd = function(map) {{
             var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-            div.innerHTML = '🔄';
+            
+            // MENGGUNAKAN IKON KOTAK FONT AWESOME AGAR RAPI DAN SERASI DENGAN BASE MAP
+            div.innerHTML = '<i class="fa-regular fa-square" style="color: #333333;"></i>';
+            
             div.style.backgroundColor = 'white';
             div.style.width = '34px';
             div.style.height = '34px';
             div.style.lineHeight = '34px';
             div.style.textAlign = 'center';
             div.style.cursor = 'pointer';
-            div.style.fontSize = '16px';
+            div.style.fontSize = '15px';
             div.title = 'Kembali ke Posisi Awal';
             
             div.onclick = function() {{
@@ -302,8 +304,6 @@ m.get_root().html.add_child(folium.Element(custom_button_js))
 # --- COMPILING DAN RENDER PETA ---
 html_map = m._repr_html_()
 components.html(html_map, height=550, scrolling=False)
-
-
 
 # ==========================================
 # 6. TABEL DATA TABULAR
