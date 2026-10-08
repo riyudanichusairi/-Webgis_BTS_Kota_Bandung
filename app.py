@@ -221,12 +221,12 @@ LAT_AWAL = -6.9175
 LONG_AWAL = 107.6191
 ZOOM_AWAL = 12
 
-# Inisialisasi Peta dasar menggunakan Esri World Imagery (Open & 100% Legal)
+# Inisialisasi Peta dasar menggunakan Stadia Smooth Imagery
 m = folium.Map(
     location=[LAT_AWAL, LONG_AWAL], 
     zoom_start=ZOOM_AWAL, 
-    tiles="https://arcgisonline.com{z}/{y}/{x}",
-    attr="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
+    tiles="https://stadiamaps.com{z}/{x}/{y}.png",
+    attr="&copy; Stadia Maps &copy; OpenStreetMap",
     control_scale=True
 )
 
