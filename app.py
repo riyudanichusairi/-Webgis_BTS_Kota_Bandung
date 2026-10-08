@@ -26,32 +26,41 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Modern Minimalis - WARNA LATAR SIDEBAR DIUBAH MENJADI BIRU MUDA
+# ==========================================
+# 1. KONFIGURASI HALAMAN & THEME GLOBAL
+# ==========================================
+st.set_page_config(
+    page_title="Dashboard WebGIS Menara Kota Bandung",
+    page_icon="🗺️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS Modern Minimalis - WARNA LATAR SIDEBAR DIUBAH MENJADI BIRU TUA
 st.markdown("""
     <style>
-    /* Mengubah latar belakang sidebar menjadi biru muda cerah (#a0c4ff) */
-    /* Serta mengubah warna tulisan utama menjadi abu gelap/hitam (#1e293b) agar terbaca */
+    /* Mengubah latar belakang sidebar menjadi biru tua (#1e3a8a atau #0f172a) */
+    /* Serta mengubah warna tulisan utama menjadi putih/terang (#f8fafc) agar kontras */
     [data-testid="stSidebar"] { 
-        background-color: #a0c4ff; 
-        color: #1e293b; 
+        background-color: #1e3a8a; 
+        color: #f8fafc; 
     }
     
     /* Menyesuaikan warna judul header cth: Kontrol Spasial */
     [data-testid="stSidebar"] h2 {
-        color: #1e293b !important;
+        color: #f8fafc !important;
     }
     
     /* Menyesuaikan warna label teks multiselect/selectbox di atas kolom input */
     [data-testid="stSidebar"] .stSelectbox label, 
     [data-testid="stSidebar"] .stMultiSelect label { 
-        color: #0f172a !important; 
-        font-weight: 600; 
+        color: #cbd5e1 !important; 
+        font-weight: 500; 
     }
     
-    /* Menyesuaikan teks info/footer di bagian paling bawah sidebar agar tidak samar */
+    /* Menyesuaikan teks info/footer di bagian paling bawah sidebar agar tetap terlihat */
     [data-testid="stSidebar"] div[style*="font-size:11px"] {
-        color: #334155 !important;
-        font-weight: 500;
+        color: #94a3b8 !important;
     }
     
     .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
@@ -59,7 +68,6 @@ st.markdown("""
     iframe { border: none; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
     </style>
     """, unsafe_allow_html=True)
-
 
 # ==========================================
 # 2. CACHING DATA (MEMBUAT APLIKASI RINGAN)
