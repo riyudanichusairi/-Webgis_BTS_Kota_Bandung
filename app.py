@@ -216,8 +216,13 @@ with m4: st.metric("Total Struktur Menara Terfilter", f"{df_filtered['struktur_t
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Persebaran Menara")
 
+# Koordinat dan tingkat zoom awal
+LAT_AWAL = -6.9175
+LONG_AWAL = 107.6191
+ZOOM_AWAL = 12
+
 # Inisialisasi Peta dasar dengan koordinat Kota Bandung
-m = folium.Map(location=[-6.9175, 107.6191], zoom_start=12, tiles="openstreetmap", control_scale=True)
+m = folium.Map(location=[LAT_AWAL, LONG_AWAL], zoom_start=ZOOM_AWAL, tiles="openstreetmap", control_scale=True)
 
 measure_control = MeasureControl(
     position='topleft',
@@ -256,10 +261,49 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# --- PERBAIKAN UTAMA RENDER PETA ---
-# Menggunakan penanganan kompilasi objek HTML m HTML bawaan yang eksplisit dan bersih
-html_map = m._repr_html_()
+# --- FITUR BARU: TOMBOL RESET POSISI AWAL (DI BAWAH KONTROL ZOOM) ---
+custom_button_js = f"""
+<script>
+document.addEventListener("DOMContentLoaded", function() {{
+    setTimeout(function() {{
+        // Mencari objek map folium yang digenerate di window
+        var maps = Object.keys(window).filter(k => k.startsWith('map_'));
+        if (maps.length > 0) {{
+            var mapObj = window[maps[0]];
+            
+            // Membuat elemen kontainer tombol kustom bergaya Leaflet
+            var customControl = L.control({{ position: 'topleft' }});
+            
+            customControl.onAdd = function(map) {{
+                var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+                div.innerHTML = '🔄';
+                div.style.backgroundColor = 'white';
+                div.style.width = '34px';
+                div.style.height = '34px';
+                div.style.lineHeight = '34px';
+                div.style.textAlign = 'center';
+                div.style.cursor = 'pointer';
+                div.style.fontSize = '18px';
+                div.title = 'Kembali ke Posisi Awal';
+                
+                // Aksi mengembalikan peta ke posisi awal dan zoom-out semula saat diklik
+                div.onclick = function() {{
+                    mapObj.setView([{LAT_AWAL}, {LONG_AWAL}], {ZOOM_AWAL});
+                }};
+                return div;
+            }};
+            
+            customControl.addTo(mapObj);
+        }}
+    }}, 1000); // Delay aman untuk memastikan objek map Leaflet sudah siap di DOM
+}});
+</script>
+"""
+
+# --- COMPILING DAN RENDER PETA ---
+html_map = m._repr_html_() + custom_button_js
 components.html(html_map, height=550, scrolling=False)
+
 
 # ==========================================
 # 6. TABEL DATA TABULAR
