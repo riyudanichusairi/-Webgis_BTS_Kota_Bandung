@@ -95,6 +95,25 @@ batas_kota, df_all = load_and_process_data()
 # 3. CONTROL PANEL (SIDEBAR FILTER MULTISELECT)
 # ==========================================
 with st.sidebar:
+    # 📌 TAMBAHKAN LOGO DI SINI (Pilih salah satu metode di bawah)
+    
+    # Opsi A: Jika menggunakan file lokal (pastikan file satu folder dengan file script)
+    st.image("logo_diskominfo.png", use_container_width=True)
+    
+    # Opsi B: Jika menggunakan tautan URL online gambar (contoh menggunakan logo Bandung)
+    # url_logo = "https://wikimedia.org"
+    # st.image(url_logo, use_container_width=True)
+    
+    # Jarak pemisah opsional agar terlihat rapi dan tidak terlalu menempel ke teks bawahnya
+    st.markdown("<br>", unsafe_allow_html=True) 
+
+    # (Sisa kode bawaan Anda ke bawah tetap sama)
+    st.markdown("<h2 style='color:#f8fafc; font-size:15px; font-weight:450; margin-bottom:15px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
+    
+    list_id = sorted([x for x in df_all["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
+    # ... dst
+
+with st.sidebar:
     st.markdown("<h2 style='color:#f8fafc; font-size:15px; font-weight:450; margin-bottom:15px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
     list_id = sorted([x for x in df_all["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
