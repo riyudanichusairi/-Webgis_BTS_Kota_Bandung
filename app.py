@@ -95,7 +95,7 @@ batas_kota, df_all = load_and_process_data()
 # 3. CONTROL PANEL (SIDEBAR FILTER MULTISELECT)
 # ==========================================
 with st.sidebar:
-    st.markdown("<h2 style='color:#f8fafc; font-size:20px; font-weight:600; margin-bottom:20px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#f8fafc; font-size:15px; font-weight:450; margin-bottom:15px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
     list_id = sorted([x for x in df_all["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
     selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
