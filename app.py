@@ -221,8 +221,14 @@ LAT_AWAL = -6.9175
 LONG_AWAL = 107.6191
 ZOOM_AWAL = 12
 
-# Inisialisasi Peta dasar dengan koordinat Kota Bandung
-m = folium.Map(location=[LAT_AWAL, LONG_AWAL], zoom_start=ZOOM_AWAL, tiles="openstreetmap", control_scale=True)
+# Inisialisasi Peta dasar dengan basemap Google Satellite gratis
+m = folium.Map(
+    location=[LAT_AWAL, LONG_AWAL], 
+    zoom_start=ZOOM_AWAL, 
+    tiles="https://google.com{x}&y={y}&z={z}",
+    attr="Google Satellite",
+    control_scale=True
+)
 
 # --- MENUKAR POSISI: MEASURE CONTROL DIPINDAHKAN KE TOPRIGHT ---
 measure_control = MeasureControl(
