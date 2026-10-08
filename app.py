@@ -261,54 +261,48 @@ if not df_filtered.empty:
             icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
         ).add_to(marker_cluster)
 
-# --- PERBAIKAN UTAMA: MENYUNTIKKAN TOMBOL RESET LANGSUNG KE OBJEK MAP ---
-from branca.element import MacroElement, Element
+# --- SOLUSI AMAN: INJEKSI JAVASCRIPT DIRECT LEAFLET VIA ELEMENT MAP ---
+# Mendapatkan nama variabel peta otomatis dari Folium
+id_peta = m.get_name()
 
-class HomeButton(MacroElement):
-    def __init__(self, lat, lon, zoom):
-        super(HomeButton, self).__init__()
-        self._name = 'HomeButton'
-        self.lat = lat
-        self.lon = lon
-        self.zoom = zoom
-
-    def render(self, **kwargs):
-        super(HomeButton, self).render(**kwargs)
+custom_button_js = f"""
+<script>
+document.addEventListener("DOMContentLoaded", function() {{
+    var mapObj = window["{id_peta}"] || {id_peta};
+    if (mapObj) {{
+        var customControl = L.control({{ position: 'topleft' }});
         
-        # Mengambil id template peta folium induk secara otomatis
-        id_peta = self._parent.get_name()
-        
-        # Menuliskan script HTML & JS Leaflet yang terikat langsung ke id peta
-        self.script.add_child(Element(f"""
-            var customControl = L.control({{ position: 'topleft' }});
+        customControl.onAdd = function(map) {{
+            var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+            div.innerHTML = '🔄';
+            div.style.backgroundColor = 'white';
+            div.style.width = '34px';
+            div.style.height = '34px';
+            div.style.lineHeight = '34px';
+            div.style.textAlign = 'center';
+            div.style.cursor = 'pointer';
+            div.style.fontSize = '16px';
+            div.title = 'Kembali ke Posisi Awal';
             
-            customControl.onAdd = function(map) {{
-                var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-                div.innerHTML = '🔄';
-                div.style.backgroundColor = 'white';
-                div.style.width = '34px';
-                div.style.height = '34px';
-                div.style.lineHeight = '34px';
-                div.style.textAlign = 'center';
-                div.style.cursor = 'pointer';
-                div.style.fontSize = '16px';
-                div.title = 'Kembali ke Posisi Awal';
-                
-                div.onclick = function() {{
-                    {id_peta}.setView([{self.lat}, {self.lon}], {self.zoom});
-                }};
-                return div;
+            div.onclick = function() {{
+                mapObj.setView([{LAT_AWAL}, {LONG_AWAL}], {ZOOM_AWAL});
             }};
-            
-            customControl.addTo({id_peta});
-        """))
+            return div;
+        }};
+        
+        customControl.addTo(mapObj);
+    }}
+}});
+</script>
+"""
 
-# Daftarkan elemen tombol baru ke dalam objek peta
-m.add_child(HomeButton(LAT_AWAL, LONG_AWAL, ZOOM_AWAL))
+# Menyuntikkan skrip JS langsung ke root objek HTML Folium
+m.get_root().html.add_child(folium.Element(custom_button_js))
 
 # --- COMPILING DAN RENDER PETA ---
 html_map = m._repr_html_()
 components.html(html_map, height=550, scrolling=False)
+
 
 
 # ==========================================
