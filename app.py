@@ -301,9 +301,15 @@ document.addEventListener("DOMContentLoaded", function() {{
 # Menyuntikkan skrip JS langsung ke root objek HTML Folium
 m.get_root().html.add_child(folium.Element(custom_button_js))
 
-# --- COMPILING DAN RENDER PETA ---
+# --- PERBAIKAN UKURAN KONTANER IFRAME (MENGATASI POTONGAN BAWAH) ---
+# 1. Menambahkan margin bawah otomatis di dalam dokumen HTML peta agar Leaflet tidak mepet ke bawah
+m.get_root().html.add_child(folium.Element("<style>.folium-map { bottom: 20px !important; }</style>"))
+
 html_map = m._repr_html_()
-components.html(html_map, height=550, scrolling=False)
+
+# 2. Meningkatkan tinggi render kontainer komponen menjadi 600 (sebelumnya 550) 
+# dan mengizinkan scrolling otomatis jika resolusi layar pengguna menyusut
+components.html(html_map, height=600, scrolling=True)
 
 # ==========================================
 # 6. TABEL DATA TABULAR
