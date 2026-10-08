@@ -115,8 +115,6 @@ def load_and_process_data():
                     "nama_desa_kelurahan": get_prop(["nama_desa_kelurahan", "kelurahan", "desa", "kel"]),
                     "pemilik_menara": get_prop(["pemilik_menara", "pemilik", "provider", "operator", "site_name", "nama"]),
                     "lokasi_menara": get_prop(["lokasi_menara", "lokasi", "alamat"]),
-                    "long": lon_val,
-                    "lat": lat_val,
                     "struktur_tower": get_prop(["struktur_tower", "struktur", "tipe", "type"]),
                     "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"]),
                     "satuan": get_prop(["satuan", "unit"], "Meter"),
