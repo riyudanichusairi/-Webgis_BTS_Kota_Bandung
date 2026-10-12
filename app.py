@@ -19,21 +19,29 @@ st.set_page_config(
 # Custom CSS Modern Minimalis - WARNA LATAR SIDEBAR DIUBAH MENJADI BIRU TUA
 st.markdown("""
     <style>
+    /* Mengubah latar belakang sidebar menjadi biru tua */
     [data-testid="stSidebar"] { 
         background-color: #1e3a8a; 
         color: #f8fafc; 
     }
+    
+    /* Menyesuaikan warna judul header */
     [data-testid="stSidebar"] h2 {
         color: #f8fafc !important;
     }
+    
+    /* Menyesuaikan warna label teks multiselect/selectbox */
     [data-testid="stSidebar"] .stSelectbox label, 
     [data-testid="stSidebar"] .stMultiSelect label { 
         color: #cbd5e1 !important; 
         font-weight: 500; 
     }
+    
+    /* Menyesuaikan teks info/footer di bagian paling bawah sidebar */
     [data-testid="stSidebar"] div[style*="font-size:11px"] {
         color: #94a3b8 !important;
     }
+    
     .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
     .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
     iframe { border: none; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
@@ -112,41 +120,42 @@ with st.sidebar:
     
     st.markdown("<h2 style='color:#f8fafc; font-size:15px; font-weight:450; margin-bottom:15px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    df_filtered_sidebar = df_all.copy()
+    # Inisialisasi basis data filter bertahap di dalam sidebar
+    df_filter_step = df_all.copy()
 
     # 1. FILTER KECAMATAN
-    list_kec = sorted([x for x in df_filtered_sidebar["nama_kecamatan"].unique() if x != "-"])
+    list_kec = sorted([x for x in df_filter_step["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.multiselect("Wilayah Kecamatan:", list_kec, placeholder="Pilih atau ketik Kecamatan...")
     if selected_kec:
-        df_filtered_sidebar = df_filtered_sidebar[df_filtered_sidebar["nama_kecamatan"].isin(selected_kec)]
+        df_filter_step = df_filter_step[df_filter_step["nama_kecamatan"].isin(selected_kec)]
 
     # 2. FILTER KELURAHAN
-    list_kel = sorted([x for x in df_filtered_sidebar["nama_desa_kelurahan"].unique() if x != "-"])
+    list_kel = sorted([x for x in df_filter_step["nama_desa_kelurahan"].unique() if x != "-"])
     selected_kel = st.multiselect("Wilayah Kelurahan:", list_kel, placeholder="Pilih atau ketik Kelurahan...")
     if selected_kel:
-        df_filtered_sidebar = df_filtered_sidebar[df_filtered_sidebar["nama_desa_kelurahan"].isin(selected_kel)]
+        df_filter_step = df_filter_step[df_filter_step["nama_desa_kelurahan"].isin(selected_kel)]
 
     # 3. FILTER PROVIDER / PEMILIK
-    list_pemilik = sorted([x for x in df_filtered_sidebar["pemilik_menara"].unique() if x != "-"])
+    list_pemilik = sorted([x for x in df_filter_step["pemilik_menara"].unique() if x != "-"])
     selected_pemilik = st.multiselect("Provider / Pemilik:", list_pemilik, placeholder="Pilih atau ketik Provider...")
     if selected_pemilik:
-        df_filtered_sidebar = df_filtered_sidebar[df_filtered_sidebar["pemilik_menara"].isin(selected_pemilik)]
+        df_filter_step = df_filter_step[df_filter_step["pemilik_menara"].isin(selected_pemilik)]
 
     # 4. FILTER JENIS STRUKTUR
-    list_struktur = sorted([x for x in df_filtered_sidebar["struktur_tower"].unique() if x != "-"])
+    list_struktur = sorted([x for x in df_filter_step["struktur_tower"].unique() if x != "-"])
     selected_struktur = st.multiselect("Jenis Struktur:", list_struktur, placeholder="Pilih atau ketik Jenis Struktur...")
     if selected_struktur:
-        df_filtered_sidebar = df_filtered_sidebar[df_filtered_sidebar["struktur_tower"].isin(selected_struktur)]
+        df_filter_step = df_filter_step[df_filter_step["struktur_tower"].isin(selected_struktur)]
 
     # 5. FILTER ID MENARA
-    list_id = sorted([x for x in df_filtered_sidebar["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
+    list_id = sorted([x for x in df_filter_step["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
     selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
     
     st.markdown("---")
-    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.6.0 (Spatial Selection Added)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.6.0 (Fitur Seleksi Map Aktif)</div>", unsafe_allow_html=True)
 
 # ==========================================
-# PROSES PENJARINGAN DATA BERDASARKAN SIDEBAR FILTER
+# PROSES FILTER MENURUT ATTRIBUT SIDEBAR
 # ==========================================
 df_filtered = df_all.copy()
 
@@ -168,12 +177,12 @@ st.markdown("<div class='main-title'>Geographic Information System Menara BTS Ko
 st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Menara Telekomunikasi Kota Bandung</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 5. PETA INTERAKTIF DIGITAL DENGAN FITUR SELEKSI DRAW
+# 5. PETA INTERAKTIF (DENGAN TOOLS DRAW / GAMBAR)
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Persebaran Menara")
-st.info("💡 **Petunjuk Fitur Seleksi Spasial:** Gunakan alat gambar (Poligon atau Kotak) di sisi kiri peta untuk memilih area tertentu secara manual. Tabel di bagian bawah akan menyaring data secara otomatis.")
+st.info("💡 **Cara Filter Manual di Area Peta:** Klik ikon **Poligon** atau **Kotak** di menu sebelah kiri peta, lalu gambarkan area di peta. Data metrik dan tabel di bawah akan tersaring secara otomatis.")
 
-# Koordinat awal
+# Koordinat dasar peta awal
 LAT_AWAL, LONG_AWAL, ZOOM_AWAL = -6.9175, 107.6191, 12
 
 m = folium.Map(
@@ -183,7 +192,7 @@ m = folium.Map(
     control_scale=True
 )
 
-# Tambahkan Measure Control
+# Menambahkan Alat Pengukur Jarak & Luas (Measure Control)
 measure_control = MeasureControl(
     position='topright',
     primary_length_unit='meters',
@@ -192,21 +201,25 @@ measure_control = MeasureControl(
 )
 m.add_child(measure_control)
 
-# Tambahkan Fitur Seleksi Menggambar (Draw Plugin)
-draw_plugin = Draw(
+# Menambahkan Alat Seleksi Area Gambar (Draw Control)
+draw_control = Draw(
     position='topleft',
     draw_options={
         'polyline': False,
         'circle': False,
         'marker': False,
         'circlemarker': False,
-        'polygon': {'shapeOptions': {'color': '#ef4444', 'fillOpacity': 0.15}},
-        'rectangle': {'shapeOptions': {'color': '#ef4444', 'fillOpacity': 0.15}}
+        'polygon': {'shapeOptions': {'color': '#ef4444', 'fillOpacity': 0.15, 'weight': 2}},
+        'rectangle': {'shapeOptions': {'color': '#ef4444', 'fillOpacity': 0.15, 'weight': 2}}
     },
-    edit_options={'edit': False, 'remove': True}
+    edit_options={
+        'edit': False,
+        'remove': True
+    }
 )
-m.add_child(draw_plugin)
+m.add_child(draw_control)
 
+# Plotting batas GeoJSON Kota
 if batas_kota:
     folium.GeoJson(
         data=batas_kota, 
@@ -214,20 +227,7 @@ if batas_kota:
         style_function=lambda feature: {"fillColor": "#3b82f6", "color": "#2563eb", "weight": 1.5, "fillOpacity": 0.04}
     ).add_to(m)
 
-if not df_filtered.empty:
-    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
-    
-    for _, row in df_filtered.iterrows():
-        popup_html = f"""
-        <div style="font-family: Arial, sans-serif; font-size:12px; width:220px;">
-            <b>ID:</b> {row['id']}<br>
-
-if batas_kota:
-    folium.GeoJson(
-        data=batas_kota, 
-        name="Batas Administrasi", 
-        style_function=lambda feature: {"fillColor": "#3b82f6", "color": "#2563eb", "weight": 1.5, "fillOpacity": 0.04}
-    ).add_to(m)
+# Plotting Marker BTS Menara
 
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
