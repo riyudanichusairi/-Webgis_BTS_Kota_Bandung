@@ -228,8 +228,6 @@ if batas_kota:
 
 # Plotting Marker BTS Menara
 if not df_filtered.empty:
-
-if not df_filtered.empty:
     marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
     
     for _, row in df_filtered.iterrows():
