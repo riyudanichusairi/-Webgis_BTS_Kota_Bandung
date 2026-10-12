@@ -120,7 +120,6 @@ with st.sidebar:
     
     st.markdown("<h2 style='color:#f8fafc; font-size:15px; font-weight:450; margin-bottom:15px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    # Inisialisasi basis data filter bertahap di dalam sidebar
     df_filter_step = df_all.copy()
 
     # 1. FILTER KECAMATAN
@@ -228,6 +227,7 @@ if batas_kota:
     ).add_to(m)
 
 # Plotting Marker BTS Menara
+if not df_filtered.empty:
 
 if not df_filtered.empty:
     marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
