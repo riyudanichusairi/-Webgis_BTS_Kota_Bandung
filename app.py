@@ -80,7 +80,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. CACHING DATA (SIMULASI DAN PROSES)
+# 2. CACHING DATA (MEMBUAT APLIKASI RINGAN)
 # ==========================================
 @st.cache_data(show_spinner="Memuat data spasial...")
 def load_and_process_data():
@@ -128,12 +128,13 @@ def load_and_process_data():
                     "long": lon_val,
                     "lat": lat_val,
                     "struktur_tower": get_prop(["struktur_tower", "struktur", "tipe"], "4 KAKI"),
-                    "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"], "42")
+                    "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"], "42"),
+                    "satuan": get_prop(["satuan", "unit"], "Meter")  # Perbaikan: Kolom satuan ditambahkan di sini
                 })
                 
     df = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
         "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
-        "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower"
+        "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", "satuan"
     ])
     return batas_kota, df
 
@@ -202,7 +203,7 @@ with st.sidebar:
     if selected_id:
         df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
 
-# Terapkan hasil akhir penyaringan data aktif
+# Terapkan hasil akhir penyaringan data aktif (.isin)
 df_filtered = df_all.copy()
 if selected_id: df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
 if selected_kec: df_filtered = df_filtered[df_filtered["nama_kecamatan"].isin(selected_kec)]
@@ -213,7 +214,6 @@ if selected_struktur: df_filtered = df_filtered[df_filtered["struktur_tower"].is
 # ==========================================
 # 4. HEADER BANNER UTAMA (TOP NAV BANNER)
 # ==========================================
-# Membuat banner biru penuh di atas halaman utama
 st.markdown("""
 <div class='header-banner'>
     <div class='header-title'>PORTAL GIS MENARA BANDUNG</div>
@@ -228,12 +228,10 @@ st.markdown("""
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Persebaran Menara")
 
-# Koordinat dan tingkat zoom awal
 LAT_AWAL = -6.9175
 LONG_AWAL = 107.6191
 ZOOM_AWAL = 12
 
-# Inisialisasi Peta dasar menggunakan OpenStreetMap Resmi (100% Free, Tanpa Batas, & Bebas API Key)
 m = folium.Map(
     location=[LAT_AWAL, LONG_AWAL], 
     zoom_start=ZOOM_AWAL, 
