@@ -3,90 +3,69 @@ import folium
 from folium.plugins import MarkerCluster, MeasureControl
 import json
 import pandas as pd
+# Menggunakan st_folium atau komponen html yang dibungkus dengan benar
 import streamlit.components.v1 as components
-import base64
-
-def get_base64_image(image_path):
-    try:
-        with open(image_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-    except Exception:
-        return ""
-        
-# Membaca file logo dari repository GitHub Anda
-logo_base64 = get_base64_image("logo_diskominfo.png")
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN & THEME GLOBAL
 # ==========================================
 st.set_page_config(
-    page_title="PORTAL GIS MENARA BANDUNG",
+    page_title="Dashboard WebGIS Menara Kota Bandung",
     page_icon="🗺️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Modern Minimalis - MENYESUAIKAN PERSIS SEPERTI GAMBAR
+# ==========================================
+# 1. KONFIGURASI HALAMAN & THEME GLOBAL
+# ==========================================
+st.set_page_config(
+    page_title="Dashboard WebGIS Menara Kota Bandung",
+    page_icon="🗺️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ==========================================
+# 1. KONFIGURASI HALAMAN & THEME GLOBAL
+# ==========================================
+st.set_page_config(
+    page_title="Dashboard WebGIS Menara Kota Bandung",
+    page_icon="🗺️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS Modern Minimalis - WARNA LATAR SIDEBAR DIUBAH MENJADI BIRU TUA
 st.markdown("""
     <style>
-    /* Mengubah warna latar belakang seluruh aplikasi dan sidebar */
-    .stApp {
-        background-color: #ffffff;
-    }
-    
+    /* Mengubah latar belakang sidebar menjadi biru tua (#1e3a8a atau #0f172a) */
+    /* Serta mengubah warna tulisan utama menjadi putih/terang (#f8fafc) agar kontras */
     [data-testid="stSidebar"] { 
-        background-color: #112244 !important; 
-        color: #ffffff !important; 
+        background-color: #1e3a8a; 
+        color: #f8fafc; 
     }
     
-    /* Menyesuaikan warna komponen teks inside sidebar */
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
-        color: #ffffff !important;
-    }
-
-    /* Styling Banner Header Atas Konten Utama */
-    .header-banner {
-        background-color: #1a4a9f;
-        padding: 15px 30px;
-        border-radius: 4px;
-        margin-bottom: 25px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .header-title {
-        color: white;
-        font-family: 'Arial', sans-serif;
-        font-size: 26px;
-        font-weight: bold;
-        letter-spacing: 1px;
+    /* Menyesuaikan warna judul header cth: Kontrol Spasial */
+    [data-testid="stSidebar"] h2 {
+        color: #f8fafc !important;
     }
     
-    /* Metrik Ringkas Khusus di Sidebar */
-    .sidebar-metric-container {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-        background-color: rgba(255, 255, 255, 0.05);
-        padding: 10px;
-        border-radius: 6px;
+    /* Menyesuaikan warna label teks multiselect/selectbox di atas kolom input */
+    [data-testid="stSidebar"] .stSelectbox label, 
+    [data-testid="stSidebar"] .stMultiSelect label { 
+        color: #cbd5e1 !important; 
+        font-weight: 500; 
     }
-    .sidebar-metric-box {
-        text-align: center;
-        flex: 1;
+    
+    /* Menyesuaikan teks info/footer di bagian paling bawah sidebar agar tetap terlihat */
+    [data-testid="stSidebar"] div[style*="font-size:11px"] {
+        color: #94a3b8 !important;
     }
-    .sidebar-metric-val {
-        font-size: 20px;
-        font-weight: 700;
-        color: #ffffff;
-    }
-    .sidebar-metric-lbl {
-        font-size: 11px;
-        color: #cbd5e1;
-    }
-
-    iframe { border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+    
+    .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
+    .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
+    iframe { border: none; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
     </style>
     """, unsafe_allow_html=True)
 
@@ -129,160 +108,120 @@ def load_and_process_data():
                     return default
 
                 raw_rows.append({
-                    "id": get_prop(["id", "objectid", "no"], f"TWR-BDG-{idx:03d}"),
-                    "nama_provinsi": get_prop(["nama_provinsi", "provinsi", "prov"], "Jawa Barat"),
-                    "nama_kabupaten_kota": get_prop(["nama_kabupaten_kota", "kabupaten", "kota"], "Kota Bandung"),
-                    "nama_kecamatan": get_prop(["nama_kecamatan", "kecamatan", "kec"], "Gedebage"),
-                    "nama_desa_kelurahan": get_prop(["nama_desa_kelurahan", "kelurahan", "desa", "kel"], "Rancabolang"),
-                    "pemilik_menara": get_prop(["pemilik_menara", "pemilik", "provider", "operator"], "TOWER BERSAMA GROUP"),
-                    "lokasi_menara": get_prop(["lokasi_menara", "lokasi", "alamat"], "JL. GEDEBAGE SELATAN"),
+                    "id": get_prop(["id", "objectid", "no"], str(idx)),
+                    "nama_provinsi": get_prop(["nama_provinsi", "provinsi", "prov"], "JAWA BARAT"),
+                    "nama_kabupaten_kota": get_prop(["nama_kabupaten_kota", "kabupaten", "kota"], "KOTA BANDUNG"),
+                    "nama_kecamatan": get_prop(["nama_kecamatan", "kecamatan", "kec"]),
+                    "nama_desa_kelurahan": get_prop(["nama_desa_kelurahan", "kelurahan", "desa", "kel"]),
+                    "pemilik_menara": get_prop(["pemilik_menara", "pemilik", "provider", "operator", "site_name", "nama"]),
+                    "lokasi_menara": get_prop(["lokasi_menara", "lokasi", "alamat"]),
                     "long": lon_val,
                     "lat": lat_val,
-                    "struktur_tower": get_prop(["struktur_tower", "struktur", "tipe"], "4 KAKI"),
-                    "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"], "42"),
-                    "satuan": get_prop(["satuan", "unit"], "Meter")  # Perbaikan: Kolom satuan ditambahkan di sini
+                    "struktur_tower": get_prop(["struktur_tower", "struktur", "tipe", "type"]),
+                    "tinggi_tower": get_prop(["tinggi_tower", "tinggi", "height"]),
+                    "satuan": get_prop(["satuan", "unit"], "Meter"),
+                    "tahun": get_prop(["tahun", "tahun_berdiri", "thn"])
                 })
                 
     df = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame(columns=[
         "id", "nama_provinsi", "nama_kabupaten_kota", "nama_kecamatan", "nama_desa_kelurahan",
-        "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", "satuan"
+        "pemilik_menara", "lokasi_menara", "long", "lat", "struktur_tower", "tinggi_tower", 
+        "satuan", "tahun", "status_izin", "no_izin"
     ])
     return batas_kota, df
 
 batas_kota, df_all = load_and_process_data()
 
 # ==========================================
-# 3. CONTROL PANEL (SIDEBAR KIRI)
+# 3. CONTROL PANEL (SIDEBAR FILTER MULTISELECT)
 # ==========================================
 with st.sidebar:
-    # 📌 Memanggil gambar lokal logo_diskominfo.png
+    # 📌 LOGO BARU (Besar & Rapi menyesuaikan lebar sidebar)
+    # Catatan: Ganti "logo_diskominfo.png" dengan file gambar lokal atau link URL gambar online Anda
     st.image("logo_diskominfo.png", use_container_width=True)
-    st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True) # Spacer pemisah rapi
     
-    st.markdown("<h2 style='font-size:22px; font-weight:700; margin-bottom:2px;'>GIS Menara BTS</h2>", unsafe_allow_html=True)
-    st.markdown("<h3 style='font-size:18px; font-weight:500; margin-bottom:20px; color:#cbd5e1 !important;'>Kota Bandung</h3>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#f8fafc; font-size:15px; font-weight:450; margin-bottom:15px;'>⚙️ Kontrol Spasial</h2>", unsafe_allow_html=True)
     
-    # --- PROSES FILTER DATA LANGSUNG DI SIDEBAR AGAR REALTIME ---
+# --- INISIALISASI DATA FILTER BERTAHAP ---
     df_filtered = df_all.copy()
 
-    # Filter Wilayah Kecamatan
+    # 1. FILTER KECAMATAN
     list_kec = sorted([x for x in df_filtered["nama_kecamatan"].unique() if x != "-"])
     selected_kec = st.multiselect("Wilayah Kecamatan:", list_kec, placeholder="Pilih atau ketik Kecamatan...")
     if selected_kec:
         df_filtered = df_filtered[df_filtered["nama_kecamatan"].isin(selected_kec)]
 
-    # Filter Wilayah Kelurahan
+    # 2. FILTER KELURAHAN (Hanya muncul yang ada di Kecamatan terpilih)
     list_kel = sorted([x for x in df_filtered["nama_desa_kelurahan"].unique() if x != "-"])
     selected_kel = st.multiselect("Wilayah Kelurahan:", list_kel, placeholder="Pilih atau ketik Kelurahan...")
     if selected_kel:
         df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"].isin(selected_kel)]
 
-    # Filter Penyedia / Pemilik
+    # 3. FILTER PROVIDER / PEMILIK (Hanya muncul yang ada di Wilayah terpilih)
     list_pemilik = sorted([x for x in df_filtered["pemilik_menara"].unique() if x != "-"])
-    selected_pemilik = st.multiselect("Penyedia / Pemilik:", list_pemilik, placeholder="Pilih atau ketik Penyedia...")
+    selected_pemilik = st.multiselect("Provider / Pemilik:", list_pemilik, placeholder="Pilih atau ketik Provider...")
     if selected_pemilik:
         df_filtered = df_filtered[df_filtered["pemilik_menara"].isin(selected_pemilik)]
 
-    # Filter Jenis Struktur
+    # 4. FILTER JENIS STRUKTUR (Hanya muncul yang sesuai dengan Kecamatan/Kelurahan/Provider terpilih)
     list_struktur = sorted([x for x in df_filtered["struktur_tower"].unique() if x != "-"])
     selected_struktur = st.multiselect("Jenis Struktur:", list_struktur, placeholder="Pilih atau ketik Jenis Struktur...")
     if selected_struktur:
         df_filtered = df_filtered[df_filtered["struktur_tower"].isin(selected_struktur)]
 
-    # Filter ID Menara
-    list_id = sorted([x for x in df_filtered["id"].unique() if x != "-"])
+    # 5. FILTER ID MENARA (Pilihan paling spesifik di akhir)
+    list_id = sorted([x for x in df_filtered["id"].unique() if x != "-"], key=lambda x: int(x) if x.isdigit() else x)
     selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
     if selected_id:
         df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
-
-    st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
-
-    # Grid Informasi Ringkasan Metrik di Sidebar (SEKARANG MENGGUNAKAN df_filtered AGAR REALTIME)
-    st.markdown(f"""
-    <div class='sidebar-metric-container'>
-        <div class='sidebar-metric-box'>
-            <div class='sidebar-metric-val'>{len(df_filtered)}</div>
-            <div class='sidebar-metric-lbl'>Unit</div>
-        </div>
-        <div class='sidebar-metric-box'>
-            <div class='sidebar-metric-val'>{df_filtered['nama_kecamatan'].nunique()}</div>
-            <div class='sidebar-metric-lbl'>Kec</div>
-        </div>
-        <div class='sidebar-metric-box'>
-            <div class='sidebar-metric-val'>{df_filtered['pemilik_menara'].nunique()}</div>
-            <div class='sidebar-metric-lbl'>Pemilik</div>
-        </div>
-        <div class='sidebar-metric-box'>
-            <div class='sidebar-metric-val'>{df_filtered['struktur_tower'].nunique()}</div>
-            <div class='sidebar-metric-lbl'>Struktur</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
     
-    st.markdown("<h3 style='font-size:14px; font-weight:600; margin-bottom:10px;'>⚙️ Kontrol Spasial</h3>", unsafe_allow_html=True)
-    
-    df_filtered = df_all.copy()
+    st.markdown("---")
+    st.markdown("<div style='font-size:11px; color:#94a3b8;'>Diskominfo Kota Bandung<br>v1.5.1 (Map Render Fixed)</div>", unsafe_allow_html=True)
 
-    # Filter Wilayah Kecamatan
-    list_kec = sorted([x for x in df_filtered["nama_kecamatan"].unique() if x != "-"])
-    selected_kec = st.multiselect("Wilayah Kecamatan:", list_kec, placeholder="Pilih atau ketik Kecamatan...")
-    if selected_kec:
-        df_filtered = df_filtered[df_filtered["nama_kecamatan"].isin(selected_kec)]
-
-    # Filter Wilayah Kelurahan
-    list_kel = sorted([x for x in df_filtered["nama_desa_kelurahan"].unique() if x != "-"])
-    selected_kel = st.multiselect("Wilayah Kelurahan:", list_kel, placeholder="Pilih atau ketik Kelurahan...")
-    if selected_kel:
-        df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"].isin(selected_kel)]
-
-    # Filter Penyedia / Pemilik
-    list_pemilik = sorted([x for x in df_filtered["pemilik_menara"].unique() if x != "-"])
-    selected_pemilik = st.multiselect("Penyedia / Pemilik:", list_pemilik, placeholder="Pilih atau ketik Penyedia...")
-    if selected_pemilik:
-        df_filtered = df_filtered[df_filtered["pemilik_menara"].isin(selected_pemilik)]
-
-    # Filter Jenis Struktur
-    list_struktur = sorted([x for x in df_filtered["struktur_tower"].unique() if x != "-"])
-    selected_struktur = st.multiselect("Jenis Struktur:", list_struktur, placeholder="Pilih atau ketik Jenis Struktur...")
-    if selected_struktur:
-        df_filtered = df_filtered[df_filtered["struktur_tower"].isin(selected_struktur)]
-
-    # Filter ID Menara
-    list_id = sorted([x for x in df_filtered["id"].unique() if x != "-"])
-    selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
-    if selected_id:
-        df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
-
-# Terapkan hasil akhir penyaringan data aktif (.isin)
+# ==========================================
+# PROSES PENJARINGAN DATA AKTIF (.isin)
+# ==========================================
 df_filtered = df_all.copy()
-if selected_id: df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
-if selected_kec: df_filtered = df_filtered[df_filtered["nama_kecamatan"].isin(selected_kec)]
-if selected_kel: df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"].isin(selected_kel)]
-if selected_pemilik: df_filtered = df_filtered[df_filtered["pemilik_menara"].isin(selected_pemilik)]
-if selected_struktur: df_filtered = df_filtered[df_filtered["struktur_tower"].isin(selected_struktur)]
+
+if selected_id:
+    df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
+
+if selected_kec: 
+    df_filtered = df_filtered[df_filtered["nama_kecamatan"].isin(selected_kec)]
+
+if selected_kel: 
+    df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"].isin(selected_kel)]
+
+if selected_pemilik: 
+    df_filtered = df_filtered[df_filtered["pemilik_menara"].isin(selected_pemilik)]
+
+if selected_struktur: 
+    df_filtered = df_filtered[df_filtered["struktur_tower"].isin(selected_struktur)]
 
 # ==========================================
-# 4. HEADER BANNER UTAMA (TOP NAV BANNER)
+# 4. KONTEN UTAMA & HEADER DASHBOARD
 # ==========================================
-st.markdown(f"""
-<div class='header-banner'>
-    <div class='header-title'>PORTAL GIS MENARA BANDUNG</div>
-    <div>
-        <!-- Bagian ini sudah diubah agar latar belakang putihnya hilang -->
-        <img src='data:image/png;base64,{logo_base64}' width='50' alt='Logo Diskominfo'>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>Geographic Information System Menara BTS Kota Bandung 2025</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Menara Telekomunikasi Kota Bandung</div>", unsafe_allow_html=True)
+
+m1, m2, m3, m4 = st.columns(4)
+with m1: st.metric("Total Menara Terfilter", f"{len(df_filtered)} Unit")
+with m2: st.metric("Total Kecamatan Terfilter", f"{df_filtered['nama_kecamatan'].nunique()}")
+with m3: st.metric("Total Pemilik Menara Terfilter", f"{df_filtered['pemilik_menara'].nunique()}")
+with m4: st.metric("Total Struktur Menara Terfilter", f"{df_filtered['struktur_tower'].nunique()}")
 
 # ==========================================
 # 5. PETA INTERAKTIF DIGITAL
 # ==========================================
 st.markdown("### 🗺️ Visualisasi Peta Persebaran Menara")
 
+# Koordinat dan tingkat zoom awal
 LAT_AWAL = -6.9175
 LONG_AWAL = 107.6191
 ZOOM_AWAL = 12
 
+# Inisialisasi Peta dasar menggunakan OpenStreetMap Resmi (100% Free, Tanpa Batas, & Bebas API Key)
 m = folium.Map(
     location=[LAT_AWAL, LONG_AWAL], 
     zoom_start=ZOOM_AWAL, 
