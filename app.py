@@ -155,26 +155,65 @@ batas_kota, df_all = load_and_process_data()
 # 3. CONTROL PANEL (SIDEBAR KIRI)
 # ==========================================
 with st.sidebar:
+    # 📌 Memanggil gambar lokal logo_diskominfo.png
+    st.image("logo_diskominfo.png", use_container_width=True)
+    st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+    
     st.markdown("<h2 style='font-size:22px; font-weight:700; margin-bottom:2px;'>GIS Menara BTS</h2>", unsafe_allow_html=True)
     st.markdown("<h3 style='font-size:18px; font-weight:500; margin-bottom:20px; color:#cbd5e1 !important;'>Kota Bandung</h3>", unsafe_allow_html=True)
     
-    # Grid Informasi Ringkasan Metrik di Sidebar sesuai gambar
+    # --- PROSES FILTER DATA LANGSUNG DI SIDEBAR AGAR REALTIME ---
+    df_filtered = df_all.copy()
+
+    # Filter Wilayah Kecamatan
+    list_kec = sorted([x for x in df_filtered["nama_kecamatan"].unique() if x != "-"])
+    selected_kec = st.multiselect("Wilayah Kecamatan:", list_kec, placeholder="Pilih atau ketik Kecamatan...")
+    if selected_kec:
+        df_filtered = df_filtered[df_filtered["nama_kecamatan"].isin(selected_kec)]
+
+    # Filter Wilayah Kelurahan
+    list_kel = sorted([x for x in df_filtered["nama_desa_kelurahan"].unique() if x != "-"])
+    selected_kel = st.multiselect("Wilayah Kelurahan:", list_kel, placeholder="Pilih atau ketik Kelurahan...")
+    if selected_kel:
+        df_filtered = df_filtered[df_filtered["nama_desa_kelurahan"].isin(selected_kel)]
+
+    # Filter Penyedia / Pemilik
+    list_pemilik = sorted([x for x in df_filtered["pemilik_menara"].unique() if x != "-"])
+    selected_pemilik = st.multiselect("Penyedia / Pemilik:", list_pemilik, placeholder="Pilih atau ketik Penyedia...")
+    if selected_pemilik:
+        df_filtered = df_filtered[df_filtered["pemilik_menara"].isin(selected_pemilik)]
+
+    # Filter Jenis Struktur
+    list_struktur = sorted([x for x in df_filtered["struktur_tower"].unique() if x != "-"])
+    selected_struktur = st.multiselect("Jenis Struktur:", list_struktur, placeholder="Pilih atau ketik Jenis Struktur...")
+    if selected_struktur:
+        df_filtered = df_filtered[df_filtered["struktur_tower"].isin(selected_struktur)]
+
+    # Filter ID Menara
+    list_id = sorted([x for x in df_filtered["id"].unique() if x != "-"])
+    selected_id = st.multiselect("ID Menara:", list_id, placeholder="Pilih atau ketik ID...")
+    if selected_id:
+        df_filtered = df_filtered[df_filtered["id"].isin(selected_id)]
+
+    st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+
+    # Grid Informasi Ringkasan Metrik di Sidebar (SEKARANG MENGGUNAKAN df_filtered AGAR REALTIME)
     st.markdown(f"""
     <div class='sidebar-metric-container'>
         <div class='sidebar-metric-box'>
-            <div class='sidebar-metric-val'>{len(df_all)}</div>
+            <div class='sidebar-metric-val'>{len(df_filtered)}</div>
             <div class='sidebar-metric-lbl'>Unit</div>
         </div>
         <div class='sidebar-metric-box'>
-            <div class='sidebar-metric-val'>{df_all['nama_kecamatan'].nunique()}</div>
+            <div class='sidebar-metric-val'>{df_filtered['nama_kecamatan'].nunique()}</div>
             <div class='sidebar-metric-lbl'>Kec</div>
         </div>
         <div class='sidebar-metric-box'>
-            <div class='sidebar-metric-val'>{df_all['pemilik_menara'].nunique()}</div>
+            <div class='sidebar-metric-val'>{df_filtered['pemilik_menara'].nunique()}</div>
             <div class='sidebar-metric-lbl'>Pemilik</div>
         </div>
         <div class='sidebar-metric-box'>
-            <div class='sidebar-metric-val'>{df_all['struktur_tower'].nunique()}</div>
+            <div class='sidebar-metric-val'>{df_filtered['struktur_tower'].nunique()}</div>
             <div class='sidebar-metric-lbl'>Struktur</div>
         </div>
     </div>
