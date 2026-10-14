@@ -4,6 +4,17 @@ from folium.plugins import MarkerCluster, MeasureControl
 import json
 import pandas as pd
 import streamlit.components.v1 as components
+import base64
+
+def get_base64_image(image_path):
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except Exception:
+        return ""
+        
+# Membaca file logo dari repository GitHub Anda
+logo_base64 = get_base64_image("logo_diskominfo.png")
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN & THEME GLOBAL
@@ -214,11 +225,12 @@ if selected_struktur: df_filtered = df_filtered[df_filtered["struktur_tower"].is
 # ==========================================
 # 4. HEADER BANNER UTAMA (TOP NAV BANNER)
 # ==========================================
-st.markdown("""
+# Ganti kode st.markdown Anda yang lama dengan format f-string di bawah ini:
+st.markdown(f"""
 <div class='header-banner'>
     <div class='header-title'>PORTAL GIS MENARA BANDUNG</div>
     <div>
-        <img src='https://wikimedia.org' width='45' alt='Logo Bandung'>
+        <img src='data:image/png;base64,{logo_base64}' width='65' alt='Logo Diskominfo' style='background: white; padding: 4px; border-radius: 4px;'>
     </div>
 </div>
 """, unsafe_allow_html=True)
