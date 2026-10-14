@@ -330,34 +330,3 @@ else:
     
     # 2. Tampilkan DataFrame yang sudah bersih dari kolom koordinat
     st.dataframe(df_tabel, use_container_width=True, hide_index=True)
-
-# Custom CSS Modern Minimalis & Layouting Standar Kartografi Resmi
-st.markdown("""
-    <style>
-    /* Mengubah latar belakang sidebar menjadi biru tua (#1e3a8a) */
-    [data-testid="stSidebar"] { 
-        background-color: #1e3a8a; 
-        color: #f8fafc; 
-    }
-    
-    /* Menyesuaikan warna judul header cth: Kontrol Spasial */
-    [data-testid="stSidebar"] h2 {
-        color: #f8fafc !important;
-    }
-    
-    /* Menyesuaikan warna label teks multiselect/selectbox di atas kolom input */
-    [data-testid="stSidebar"] .stSelectbox label, 
-    [data-testid="stSidebar"] .stMultiSelect label { 
-        color: #cbd5e1 !important; 
-        font-weight: 500; 
-    }
-    
-    /* Menyesuaikan teks info/footer di bagian paling bawah sidebar agar tetap terlihat */
-    [data-testid="stSidebar"] div[style*="font-size:11px"] {
-        color: #94a3b8 !important;
-    }
-    
-    .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
-    .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
-    iframe { border: none; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-    
