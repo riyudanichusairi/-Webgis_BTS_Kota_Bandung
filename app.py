@@ -330,3 +330,135 @@ else:
     
     # 2. Tampilkan DataFrame yang sudah bersih dari kolom koordinat
     st.dataframe(df_tabel, use_container_width=True, hide_index=True)
+
+# Custom CSS Modern Minimalis & Layouting Standar Kartografi Resmi
+st.markdown("""
+    <style>
+    /* Mengubah latar belakang sidebar menjadi biru tua (#1e3a8a) */
+    [data-testid="stSidebar"] { 
+        background-color: #1e3a8a; 
+        color: #f8fafc; 
+    }
+    
+    /* Menyesuaikan warna judul header cth: Kontrol Spasial */
+    [data-testid="stSidebar"] h2 {
+        color: #f8fafc !important;
+    }
+    
+    /* Menyesuaikan warna label teks multiselect/selectbox di atas kolom input */
+    [data-testid="stSidebar"] .stSelectbox label, 
+    [data-testid="stSidebar"] .stMultiSelect label { 
+        color: #cbd5e1 !important; 
+        font-weight: 500; 
+    }
+    
+    /* Menyesuaikan teks info/footer di bagian paling bawah sidebar agar tetap terlihat */
+    [data-testid="stSidebar"] div[style*="font-size:11px"] {
+        color: #94a3b8 !important;
+    }
+    
+    .main-title { font-family: 'Inter', sans-serif; color: #1e293b; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 2px; }
+    .sub-title { color: #64748b; font-size: 14px; margin-bottom: 25px; }
+    iframe { border: none; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    
+    /* =========================================================
+       KUSTOMISASI STYLE HALAMAN CETAK KARTOGRAFI (LAYOUTING)
+       ========================================================= */
+    .print-box-canvas {
+        background-color: #ffffff;
+        border: 2px solid #0f172a;
+        padding: 25px;
+        border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        font-family: 'Times New Roman', Times, serif; /* Font formal standar peta instruksi BIG */
+        margin-top: 25px;
+    }
+    
+    /* Kop / Judul Peta Resmi */
+    .peta-header-cetak {
+        border: 2px solid #0f172a;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 20px;
+        background-color: #fcfcfc;
+    }
+    .peta-header-cetak h1 {
+        font-size: 20px;
+        text-transform: uppercase;
+        margin: 0;
+        font-weight: bold;
+        color: #0f172a;
+    }
+    .peta-header-cetak h2 {
+        font-size: 14px;
+        margin: 5px 0 0 0;
+        color: #334155;
+    }
+
+    /* Kotak Bingkai Atribut Kartografi (Sisi Kanan) */
+    .kotak-atribut-kartografi {
+        border: 2px solid #0f172a;
+        padding: 15px;
+        background-color: #ffffff;
+        height: 100%;
+    }
+
+    /* Elemen Arah Mata Angin (Kompas) */
+    .kompas-peta {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #cbd5e1;
+    }
+    .panah-utara-kompas {
+        font-size: 35px;
+        font-weight: bold;
+        color: #0f172a;
+        line-height: 1;
+    }
+    .teks-utara-kompas {
+        font-size: 15px;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
+
+    /* Kotak Legenda Peta */
+    .legenda-peta-cetak {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #cbd5e1;
+    }
+    .legenda-title-cetak {
+        font-size: 14px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        text-decoration: underline;
+    }
+    .legenda-item-cetak {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 12px;
+    }
+    .simbol-titik-cetak {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 10px;
+        border: 1px solid #000;
+    }
+    .simbol-garis-cetak {
+        width: 20px;
+        height: 3px;
+        margin-right: 10px;
+    }
+
+    /* Kotak Batas Metadata Teknis Peta */
+    .metadata-peta-cetak {
+        font-size: 11px;
+        line-height: 1.5;
+        color: #1e293b;
+    }
+    </style>
+    """, unsafe_allow_html=True)
