@@ -225,12 +225,12 @@ if selected_struktur: df_filtered = df_filtered[df_filtered["struktur_tower"].is
 # ==========================================
 # 4. HEADER BANNER UTAMA (TOP NAV BANNER)
 # ==========================================
-# Ganti kode st.markdown Anda yang lama dengan format f-string di bawah ini:
 st.markdown(f"""
 <div class='header-banner'>
     <div class='header-title'>PORTAL GIS MENARA BANDUNG</div>
     <div>
-        <img src='data:image/png;base64,{logo_base64}' width='65' alt='Logo Diskominfo' style='background: white; padding: 4px; border-radius: 4px;'>
+        <!-- Bagian ini sudah diubah agar latar belakang putihnya hilang -->
+        <img src='data:image/png;base64,{logo_base64}' width='50' alt='Logo Diskominfo'>
     </div>
 </div>
 """, unsafe_allow_html=True)
