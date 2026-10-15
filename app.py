@@ -265,7 +265,7 @@ if not df_filtered.empty:
         
         # 🌟 INI PERUBAHAN UNTUK OPSI 2 (MENGGUNAKAN FILE GAMBAR KUSTOM ANDA)
         ikon_kustom = folium.CustomIcon(
-            "menara emoji.png",
+            "emoji_tower.png",
             icon_size=(35, 35)  # Anda bisa mengubah ukuran ini (lebar, tinggi) jika dirasa terlalu besar/kecil
         )
         
