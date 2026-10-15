@@ -263,17 +263,13 @@ if not df_filtered.empty:
         </div>
         """
         
-        # 🌟 INI PERUBAHAN UNTUK OPSI 2 (MENGGUNAKAN FILE GAMBAR KUSTOM ANDA)
+        # 🌟 MENGGUNAKAN RAW URL GITHUB AGAR TIDAK EROR DI STREAMLIT CLOUD
+        url_ikon = "https://githubusercontent.com"
+        
         ikon_kustom = folium.CustomIcon(
-            "emoji_tower.png",
+            url_ikon,
             icon_size=(35, 35)  # Anda bisa mengubah ukuran ini (lebar, tinggi) jika dirasa terlalu besar/kecil
         )
-        
-        folium.Marker(
-            location=[row['lat'], row['long']],
-            popup=folium.Popup(popup_html, max_width=250),
-            icon=ikon_kustom  # Memanggil ikon gambar kustom yang sudah dibuat di atas
-        ).add_to(marker_cluster)
 
 # --- TOMBOL KOTAK RESET TETAP DI TOPLEFT (DI BAWAH TOMBOL ZOOM) ---
 id_peta = m.get_name()
