@@ -248,7 +248,7 @@ if batas_kota:
     ).add_to(m)
 
 if not df_filtered.empty:
-    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 17}).add_to(m)
+    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
     
     for _, row in df_filtered.iterrows():
         popup_html = f"""
@@ -262,14 +262,11 @@ if not df_filtered.empty:
             <b>Koordinat:</b> ({row['lat']}, {row['long']})
         </div>
         """
-        
-        # 🌟 MENGGUNAKAN RAW URL GITHUB AGAR TIDAK EROR DI STREAMLIT CLOUD
-        url_ikon = "https://githubusercontent.com"
-        
-        ikon_kustom = folium.CustomIcon(
-            url_ikon,
-            icon_size=(35, 35)  # Anda bisa mengubah ukuran ini (lebar, tinggi) jika dirasa terlalu besar/kecil
-        )
+        folium.Marker(
+            location=[row['lat'], row['long']],
+            popup=folium.Popup(popup_html, max_width=250),
+            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
+        ).add_to(marker_cluster)
 
 # --- TOMBOL KOTAK RESET TETAP DI TOPLEFT (DI BAWAH TOMBOL ZOOM) ---
 id_peta = m.get_name()
