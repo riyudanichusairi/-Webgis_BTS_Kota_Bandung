@@ -262,10 +262,17 @@ if not df_filtered.empty:
             <b>Koordinat:</b> ({row['lat']}, {row['long']})
         </div>
         """
+        
+        # 🌟 INI PERUBAHAN UNTUK OPSI 2 (MENGGUNAKAN FILE GAMBAR KUSTOM ANDA)
+        ikon_kustom = folium.CustomIcon(
+            "menara emoji.png",
+            icon_size=(35, 35)  # Anda bisa mengubah ukuran ini (lebar, tinggi) jika dirasa terlalu besar/kecil
+        )
+        
         folium.Marker(
             location=[row['lat'], row['long']],
             popup=folium.Popup(popup_html, max_width=250),
-            icon=folium.Icon(color="blue", icon="tower-broadcast", prefix="fa")
+            icon=ikon_kustom  # Memanggil ikon gambar kustom yang sudah dibuat di atas
         ).add_to(marker_cluster)
 
 # --- TOMBOL KOTAK RESET TETAP DI TOPLEFT (DI BAWAH TOMBOL ZOOM) ---
