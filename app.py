@@ -248,7 +248,7 @@ if batas_kota:
     ).add_to(m)
 
 if not df_filtered.empty:
-    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 14}).add_to(m)
+    marker_cluster = MarkerCluster(options={'maxClusterRadius': 35, 'disableClusteringAtZoom': 17}).add_to(m)
     
     for _, row in df_filtered.iterrows():
         popup_html = f"""
