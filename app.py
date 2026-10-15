@@ -219,7 +219,7 @@ st.markdown("### 🗺️ Visualisasi Peta Persebaran Menara")
 # Koordinat dan tingkat zoom awal
 LAT_AWAL = -6.9175
 LONG_AWAL = 107.6191
-ZOOM_AWAL = 12
+ZOOM_AWAL = 11
 
 # Inisialisasi Peta dasar menggunakan OpenStreetMap Resmi (100% Free, Tanpa Batas, & Bebas API Key)
 m = folium.Map(
