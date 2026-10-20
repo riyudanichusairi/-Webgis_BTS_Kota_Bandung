@@ -202,7 +202,7 @@ if selected_struktur:
 # ==========================================
 # 4. KONTEN UTAMA & HEADER DASHBOARD
 # ==========================================
-st.markdown("<div class='main-title'>Geographic Information System Menara BTS Kota Bandung 2025</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>Geographic Information System Menara BTS Kota Bandung 2023</div>", unsafe_allow_html=True)
 st.markdown("<div class='sub-title'>Data Pemetaan Infrastruktur Menara Telekomunikasi Kota Bandung</div>", unsafe_allow_html=True)
 
 m1, m2, m3, m4 = st.columns(4)
